@@ -188,12 +188,9 @@ def Output_C_Struct(rec_name, rec_fields):
 def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=''):
     if fixed_size != '':
         if fixed_size[0].isdigit():
-            fixed_size = str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
-        return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, %s%s%s, %s);\n' % \
-                (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
-    else:
-        return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, %s%s%s);\n' % \
-                (dir_suffix, size_suffix, field_parent, field_name, field_loop_index)
+            fixed_size = ', ' + str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
+    return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
+            (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
 # ------------------------------------------------------------------------------
 def Get_Value_For_Defined_By(defined_by, rec_fields):
     ''' Used for COUNT_DEFINED_BY or SIZE_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
@@ -227,6 +224,9 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         if field_loop_max:
             body += in2 + '{ for(int f = 0; f < %s; f++) {\n' % field_loop_max
 
+        # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
+        # TODO - For VARIANT, really need to have size info but the current ICD omits this.
+
         if   field['type'] in pack_8:   body += in2 + Get_C_Field_Coder(dir_suffix, '08', field_parent, field['name'], field_loop_index)
         elif field['type'] in pack_16:  body += in2 + Get_C_Field_Coder(dir_suffix, '16', field_parent, field['name'], field_loop_index)
         elif field['type'] in pack_32:  body += in2 + Get_C_Field_Coder(dir_suffix, '32', field_parent, field['name'], field_loop_index)
@@ -237,13 +237,6 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         elif field['type'].startswith('CHAR'):
             fixed_size = field['type'].replace('CHAR', '')
             body      += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
-        elif field['type'] == 'STRUCT':
-            fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
-            if g_rec_fields_by_name.has_key(fmt):
-                child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
-                body += Output_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
-            else:
-                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
         elif field['type'] == 'STRING':
             # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
             if field['size']:
@@ -251,6 +244,13 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
             else:
                 # This is for null-terminated strings only.  TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
                 body  += in2 + Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
+        elif field['type'] == 'STRUCT':
+            fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
+            if g_rec_fields_by_name.has_key(fmt):
+                child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
+                body += Output_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
+            else:
+                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
         else:
             body += in2 + '// Cannot yet handle field type <%s> name <%s>\n' % (field['type'], field['name'])
 
