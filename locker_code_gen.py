@@ -165,105 +165,105 @@ def Output_C_Struct(rec_name, rec_fields):
     body = ''
     for field in rec_fields[1:]:
         fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
+        ptr, ary = '', ''
+        if field['count'] != '':
+            if field['count'][0] == '#':
+                ary = '[%s]' % field['count'][1:]
+            else:
+                ptr = '*'
         if field['type'] == 'STRUCT':
-            body += '    %-20s %s;\n' % (fmt, field['name'])
-        elif field['type'] == 'VARIANT':
-            body += '    %-20s %s;\n' % (fmt, field['name'])
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field['type'] == 'VARIANT':  # TODO Don't use
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field['type'] == 'VARIANT_ARRAY':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field['type'] == 'VARIANT_LIST':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field['type'] == 'VARIANT_ITEM':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
         else:
-            body += '    %-20s %s;\n' % (field['type'], field['name'])
+            body += '    %-20s%s %s%s;\n' % (field['type'], ptr, field['name'], ary)
     print('struct ' + rec_name + ' {\n' + body + '};\n')
 # ------------------------------------------------------------------------------
-def Output_C_Struct_Unpack(rec_name, rec_fields, field_parent='data->'):
-    pack_8  = ['UINT8',  'INT8']
-    pack_16 = ['UINT16', 'INT16']
-    pack_32 = ['UINT32', 'INT32', 'FLOAT32']
-    pack_64 = ['UINT64', 'INT64', 'FLOAT64']
-
-# TODO Check for COUNT_DEFINED_BY and loop with appended [#]
-
-    in1 = '    '
-    in2 = in1 + in1
-    body = ''
-    for field in rec_fields[1:]:
-        if field['type'] in pack_8:
-            body += in2 + 'in_offset = Get_Endian_08(in_buffer, in_max, in_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_16:
-            body += in2 + 'in_offset = Get_Endian_16(in_buffer, in_max, in_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_32:
-            body += in2 + 'in_offset = Get_Endian_32(in_buffer, in_max, in_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_64:
-            body += in2 + 'in_offset = Get_Endian_64(in_buffer, in_max, in_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'].startswith('CHAR'):
-            try:
-                length = int(field['type'].replace('CHAR', ''))  # TODO allow 'CHAR' or require 'CHAR1'?
-                body += in2 + 'in_offset = Get_Endian_Ch(in_buffer, in_max, in_offset, %s%s, %d);\n' % (field_parent, field['name'], length)
-            except:
-                body += in2 + '// Cannot handle invalid CHAR# field type <%s>\n' % field['type']
-        elif field['type'] == 'STRUCT':
-            fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
-            if g_rec_fields_by_name.has_key(fmt):
-                child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
-                body += Output_C_Struct_Unpack(child_rec_name, child_rec_fields, field_parent + field['name'] + '->')
-            else:
-                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
-        else:
-            body += in2 + '// Cannot yet handle field type <%s> name <%s>\n' % (field['type'], field['name'])
-
-    if field_parent == 'data->':
-        print('UINT16 Unpack_%s(BYTE in_buffer[], const UINT16 in_max, %s* data)' % (rec_name, rec_name))
-        print('{')
-        print(in1 + 'UINT16 in_offset = 0;')
-        print(in1 + 'if (data != 0) {')
-        print(body + in1 + '}')
-        print(in1 + 'return in_offset;  // Actual length of processed buffer.')
-        print('}')
+def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=''):
+    if fixed_size != '':
+        if fixed_size[0].isdigit():
+            fixed_size = str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
+        return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, %s%s%s, %s);\n' % \
+                (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
     else:
-        return body
+        return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, %s%s%s);\n' % \
+                (dir_suffix, size_suffix, field_parent, field_name, field_loop_index)
 # ------------------------------------------------------------------------------
-def Output_C_Struct_Pack(rec_name, rec_fields, field_parent='data->'):
+def Get_Value_For_Defined_By(defined_by, rec_fields):
+    ''' Used for COUNT_DEFINED_BY or SIZE_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
+    if defined_by.startswith('#'):     # Absolute count starts with '#'
+        if len(defined_by) > 1:
+            return defined_by[1:]
+    else:                              # Relative index to a counter field.
+        index = PSW_Spreadsheet.as_int(defined_by)
+        if index in range(1, len(rec_fields)):
+            return rec_fields[index]['name']
+    # Parsing/range error.
+    return None
+# ------------------------------------------------------------------------------
+def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
     pack_8  = ['UINT8',  'INT8']
     pack_16 = ['UINT16', 'INT16']
     pack_32 = ['UINT32', 'INT32', 'FLOAT32']
     pack_64 = ['UINT64', 'INT64', 'FLOAT64']
+
+    # Note: All fields are assumed to be validated by this point, so
+    #       many possible integrity checks are omitted.
 
     in1 = '    '
     in2 = in1 + in1
     body = ''
     for field in rec_fields[1:]:
 
-# TODO Check for COUNT_DEFINED_BY and loop with appended [#]
+        field_loop_max   = Get_Value_For_Defined_By(field['count'], rec_fields)
+        field_loop_index = '[f]' if field_loop_max else ''
 
-        if field['type'] in pack_8:
-            body += in2 + 'out_offset = Put_Endian_08(out_buffer, out_max, out_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_16:
-            body += in2 + 'out_offset = Put_Endian_16(out_buffer, out_max, out_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_32:
-            body += in2 + 'out_offset = Put_Endian_32(out_buffer, out_max, out_offset, %s%s);\n' % (field_parent, field['name'])
-        elif field['type'] in pack_64:
-            body += in2 + 'out_offset = Put_Endian_64(out_buffer, out_max, out_offset, %s%s);\n' % (field_parent, field['name'])
+        if field_loop_max:
+            body += in2 + '{ for(int f = 0; f < %s; f++) {\n' % field_loop_max
+
+        if   field['type'] in pack_8:   body += in2 + Get_C_Field_Coder(dir_suffix, '08', field_parent, field['name'], field_loop_index)
+        elif field['type'] in pack_16:  body += in2 + Get_C_Field_Coder(dir_suffix, '16', field_parent, field['name'], field_loop_index)
+        elif field['type'] in pack_32:  body += in2 + Get_C_Field_Coder(dir_suffix, '32', field_parent, field['name'], field_loop_index)
+        elif field['type'] in pack_64:  body += in2 + Get_C_Field_Coder(dir_suffix, '64', field_parent, field['name'], field_loop_index)
+        elif field['type'] == 'CHAR':
+            # User may select 'CHAR' to me 1 CHAR, or may combine it with the SIZE_DEFINED_BY cell.
+            body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['size'])
         elif field['type'].startswith('CHAR'):
-            try:
-                length = int(field['type'].replace('CHAR', ''))  # TODO allow 'CHAR' or require 'CHAR1'?
-                body += in2 + 'out_offset = Put_Endian_Ch(out_buffer, out_max, out_offset, %s%s, %d);\n' % (field_parent, field['name'], length)
-            except:
-                body += in2 + '// Cannot handle invalid CHAR# field type <%s>\n' % field['type']
+            fixed_size = field['type'].replace('CHAR', '')
+            body      += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
         elif field['type'] == 'STRUCT':
             fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
             if g_rec_fields_by_name.has_key(fmt):
                 child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
-                body += Output_C_Struct_Pack(child_rec_name, child_rec_fields, field_parent + field['name'] + '->')
+                body += Output_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
             else:
                 body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
+        elif field['type'] == 'STRING':
+            # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
+            if field['size']:
+                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['size'])
+            else:
+                # This is for null-terminated strings only.  TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
+                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
         else:
             body += in2 + '// Cannot yet handle field type <%s> name <%s>\n' % (field['type'], field['name'])
 
+        if field_loop_max:
+            body += in2 + '}}\n' # For loop and scoping block closure.
+
     if field_parent == 'data->':
-        print('UINT16 Pack_%s(BYTE out_buffer[], const UINT16 out_max, %s* data)' % (rec_name, rec_name))
+        print('UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)' % (dir_suffix, rec_name, rec_name))
         print('{')
-        print(in1 + 'UINT16 out_offset = 0;')
+        print(in1 + 'UINT16 byte_offset = 0;')
         print(in1 + 'if (data != 0) {')
         print(body + in1 + '}')
-        print(in1 + 'return out_offset;  // Actual length of packed buffer.')
+        print(in1 + 'return byte_offset;  // Actual length of processed buffer.')
         print('}')
     else:
         return body
@@ -305,8 +305,8 @@ def Load_Recs_Spreadsheet(filename):
         rec_fields = g_rec_fields_by_name[rec_name]
 # TODO skip Aux
         Output_C_Struct(rec_name, rec_fields)
-        Output_C_Struct_Pack(rec_name, rec_fields)
-        Output_C_Struct_Unpack(rec_name, rec_fields)
+        Output_C_Struct_Coder('Pack',   rec_name, rec_fields)
+        Output_C_Struct_Coder('Unpack', rec_name, rec_fields)
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
