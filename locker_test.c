@@ -16,6 +16,7 @@ void test_Ping_Message()
     UINT16 out_offset = 0;
     UINT16 in_offset = 0;
 
+    Ping_Message* net_msg = 0;
     Ping_Message out_msg;
     Ping_Message in_msg;
 
@@ -28,6 +29,18 @@ void test_Ping_Message()
     out_msg.Header_CR       = Compute_CRC16((BYTE*)&out_msg, sizeof(out_msg) - sizeof(UINT16));  /* TODO is this correct size for CRC16 compute? */
 
     out_offset = Pack_Ping_Message(buffer, buffer_max, &out_msg);
+
+    net_msg = (Ping_Message*) buffer;
+
+    printf("-- Ping -- network\n");
+    printf("--         net_msg.Sync            = x%x\n", net_msg->Sync           );
+    printf("--         net_msg.Message_ID      = %d\n",  net_msg->Message_ID     );
+    printf("--         net_msg.Source_ID       = %d\n",  net_msg->Source_ID      );
+    printf("--         net_msg.Dest_ID         = %d\n",  net_msg->Dest_ID        );
+    printf("--         net_msg.Word_Count      = %d\n",  net_msg->Word_Count     );
+    printf("--         net_msg.Packet_ID_Seq   = %d\n",  net_msg->Packet_ID_Seq  );
+    printf("--         net_msg.Header_CR       = x%x\n", net_msg->Header_CR      );
+
 
     in_offset = Unpack_Ping_Message(buffer, buffer_max, &in_msg);
 

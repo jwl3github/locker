@@ -17,6 +17,8 @@ typedef float              FLOAT32;
 typedef char               CHAR;
 typedef char*              STRING;
 
+extern UINT16 Calculate_CRC16(BYTE* data_p, UINT16 length);
+
 extern UINT16 Pack_Endian_08(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
 extern UINT16 Pack_Endian_16(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
 extern UINT16 Pack_Endian_32(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
