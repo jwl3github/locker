@@ -17,7 +17,9 @@ Quit      = PSW_Basic_Log.Quit
 # ------------------------------------------------------------------------------
 g_enum = {}
 g_rec_fields_by_name = {}
+g_rec_fields_by_order = []
 g_Coder    = ''
+g_Proto    = ''
 g_Aux_Dec  = ''
 g_Rec_Dec  = ''
 g_Enum_Dec = ''
@@ -28,7 +30,7 @@ g_Enum_Cnt = 1000
 # Utilities
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
-def Make_Valid_C_Var(text, is_type = False):
+def Make_Valid_C_Var(text):
     # Characters to ignore/remove.
     # This is based on the current practices of the ICD in use and is not universal.
     # All other non-alphanum are swapped with underscore.
@@ -46,8 +48,6 @@ def Make_Valid_C_Var(text, is_type = False):
         var = '_var'
     elif not var[0].isalpha():
         var = '_' + var
-    if is_type:
-        var = 'T_' + var    # Choosing this convention for struct/enum type names.  NOT UNIVERSAL
     #Log_Debug('Make_Valid_C_Var  text <%s> -> var <%s>' % (text, var))
     return var
 # ------------------------------------------------------------------------------
@@ -85,76 +85,28 @@ def Validate_Row(block_start_row, field_index, row):
         Log_Warn('Index is not sequential - found <%d> expected <%d> - start_row <%d>' %
                 (row['INDEX'], field_index, block_start_row))
 
-    if not Is_Valid_C_Var(row['TYPE_CATEGORY']):
+    if not Is_Valid_C_Var(row['TYPE']):
         Log_Warn('TYPE field has invalid chars <%s> - start_row <%d>' %
-                (row['TYPE_CATEGORY'], block_start_row))
-        row['TYPE_CATEGORY'] = Make_Valid_C_Var(row['TYPE_CATEGORY'])
+                (row['TYPE'], block_start_row))
+        row['TYPE'] = Make_Valid_C_Var(row['TYPE'])
 
-    if row['FORMAT_TYPE'] != '':
-        fmt = row['FORMAT_TYPE']
-        if fmt.startswith('STRUCT-'): fmt = fmt.replace('STRUCT-', '')
-        if fmt.startswith('ENUM-'):   fmt = fmt.replace('ENUM-', '')
-        if not Is_Valid_C_Var(fmt):
+    if row['FORMAT'] != '':
+        if not Is_Valid_C_Var(row['FORMAT'].replace('ENUM-', '')):
             Log_Warn('FORMAT field has invalid chars <%s> - start_row <%d>' %
-                    (row['FORMAT_TYPE'], block_start_row))
-            row['TYPE_CATEGORY'] = Make_Valid_C_Var(row['TYPE_CATEGORY'])
+                    (row['FORMAT'], block_start_row))
+            row['TYPE'] = Make_Valid_C_Var(row['TYPE'])
 
-    if row['COUNT_DEFINED_BY'] != '' and row['EXPECTED_VALUE'] != '':
-        Log_Warn('COUNT_DEFINED_BY and EXPECTED_VALUE are mutually exclusive.  EXPECTED_VALUE <%s> ignored - start_row <%d>' %
-                (row['EXPECTED_VALUE'], block_start_row))
-        row['EXPECTED_VALUE'] = ''
+    if row['COUNT_DEFINED_BY'] != '' and row['FIXED_VALUE'] != '':
+        Log_Warn('COUNT_DEFINED_BY and FIXED_VALUE are mutually exclusive.  FIXED_VALUE <%s> ignored - start_row <%d>' %
+                (row['FIXED_VALUE'], block_start_row))
+        row['FIXED_VALUE'] = ''
 
     # COUNT_DEFINED_BY must be '#<num>' or else INDEX [1 .. this_row_index-1] to field of [U]INT type
-    # DEFINES_RECORD_TYPE and DEFINES_RECORD_TYPE must be regular [U]INT#
-    # Cannot have an EXPECTED_VALUE or DEFAULT_VALUE for field with COUNT_DEFINED_BY
+    # SPECIAL_CONTROL fields must be regular [U]INT#
+    # Cannot have an FIXED_VALUE or DEFAULT_VALUE for field with COUNT_DEFINED_BY or type STRUCT
     # MIN_RANGE/MAX_RANGE only work for [U]INT and FLOAT
-    # Various must be 'TRUE' or (blank)
 
     return True  # No error or error can be ignored/worked around.
-# ------------------------------------------------------------------------------
-def Process_Block(block_start_row, block_cells):
-    rec_name    = ''
-    rec_fields  = []
-    field_index = 0    # Counter to validate the expected sequential INDEX value.
-
-    for row in block_cells:
-        if not Validate_Row(block_start_row, field_index, row):
-            continue
-
-        field = { 'type':     Make_Valid_C_Var(row['TYPE_CATEGORY']),
-                  'name':     Make_Valid_C_Var(row['FIELD_NAME']),
-                  'fmt':      Make_Valid_C_Var(row['FORMAT_TYPE']),
-                  'count':    str(row['COUNT_DEFINED_BY']),
-                  'size':     str(row['SIZE_DEFINED_BY']),
-                  'value':    str(row['EXPECTED_VALUE']),
-                  'def_type': row['DEFINES_RECORD_TYPE'] == 'TRUE',
-                  'def_size': row['DEFINES_RECORD_SIZE'] == 'TRUE', }
-
-        if row['INDEX'] == 0:
-            Log_Debug('Processing new block Record Type <%s> Record Name <%s>' % (field['type'], field['fmt']))
-            if field['type'] == 'CommandRecord' or field['type'] == 'Aux':
-                rec_name = field['fmt'].replace('STRUCT_', '')
-            else:
-                Log_Error('Unrecognized Record TYPE_CATEGORY <%s> - start_row <%d>' % (field['type'], block_start_row))
-                Log_Error('Expected "CommandRecord" or "Aux".  Cannot process this block.')
-                return
-
-        elif rec_name == '':
-                Log_Error('Missing INDEX [0] Record TYPE_CATEGORY or FORMAT_TYPE - start_row <%d>' % (block_start_row))
-                Log_Error('Expected "CommandRecord" or "Aux" with a name in FORMAT_TYPE.  Cannot process this block.')
-                return
-
-        elif field['type'] == 'STRUCT':
-            field['type'] = field['type'].replace('T_STRUCT_','T_')
-
-        elif field['type'] == 'VARIANT':
-            # TODO What else?
-            field['type'] = field['type'].replace('T_STRUCT_','T_')
-
-        rec_fields.append(field)
-        field_index += 1
-
-    return rec_name, rec_fields
 # ------------------------------------------------------------------------------
 def Find_Next_Block(table, start_row):
     ''' Finds the next set of contiguous non-blank rows. '''
@@ -167,15 +119,59 @@ def Find_Next_Block(table, start_row):
         end_row += 1
     return (start_row, end_row)
 # ------------------------------------------------------------------------------
-def Get_Value_For_Defined_By(defined_by, rec_fields):
-    ''' Used for COUNT_DEFINED_BY or SIZE_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
-    if defined_by.startswith('#'):     # Absolute count starts with '#'
-        if len(defined_by) > 1:
-            return defined_by[1:]
-    else:                              # Relative index to a counter field.
-        index = PSW_Spreadsheet.as_int(defined_by)
-        if index in range(1, len(rec_fields)):
-            return rec_fields[index]['name']
+def Process_Block(block_start_row, block_cells):
+    rec_name    = ''
+    rec_fields  = []
+    field_index = 0    # Counter to validate the expected sequential INDEX value.
+
+    for row in block_cells:
+        if not Validate_Row(block_start_row, field_index, row):
+            continue
+
+        field = { 'type':        Make_Valid_C_Var(row['TYPE']),
+                  'name':        Make_Valid_C_Var(row['NAME']),
+                  'fmt':         Make_Valid_C_Var(row['FORMAT']),
+                  'rel_count':   0,
+                  'abs_count':   0,
+                  'value':       str(row['FIXED_VALUE']),
+                  'msg_id':      row['SPECIAL_CONTROL'] == 'MSG_ID',
+                  'msg_size_16': row['SPECIAL_CONTROL'] == 'MSG_SIZE_16',
+                  'msg_size_32': row['SPECIAL_CONTROL'] == 'MSG_SIZE_32',
+                  'crc_16':      row['SPECIAL_CONTROL'] == 'CRC_16',
+                  'crc_32':      row['SPECIAL_CONTROL'] == 'CRC_32',
+        }
+
+        count = str(row['COUNT_DEFINED_BY'])
+        if count != '':
+            if count[0] == '#':
+                field['abs_count'] = PSW_Spreadsheet.as_int(count[1:])
+            else:
+                field['rel_count'] = PSW_Spreadsheet.as_int(count)
+
+        if row['INDEX'] == 0:
+            Log_Debug('Processing new block Record Type <%s> Record Name <%s>' % (field['type'], field['fmt']))
+            rec_name = field['fmt']
+            if field['type'] != 'Message' and field['type'] != 'Aux':
+                Log_Error('Unrecognized Record TYPE <%s> - start_row <%d>' % (field['type'], block_start_row))
+                Log_Error('Expected "Message" or "Aux".  Cannot process this block.')
+                return None, None
+
+        rec_fields.append(field)
+        field_index += 1
+
+    if rec_name == '':
+        Log_Error('Missing INDEX [0] Record TYPE or FORMAT - start_row <%d>' % (block_start_row))
+        Log_Error('Expected "Message" or "Aux" in TYPE with a message name in FORMAT.  Cannot process this block.')
+        return None, None
+    else:
+        return rec_name, rec_fields
+# ------------------------------------------------------------------------------
+def Get_Value_For_Defined_By(abs_count, rel_count, rec_fields):
+    ''' Used for COUNT_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
+    if abs_count > 0:
+       return abs_count
+    elif rel_count in range(1, len(rec_fields)):
+       return rec_fields[rel_count]['name']
     # Parsing/range error.
     return None
 # ------------------------------------------------------------------------------
@@ -184,13 +180,12 @@ def Create_C_Struct(rec_name, rec_fields):
     body = ''
     for field in rec_fields[1:]:
         field_type = field['type']
-        fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
+        field_fmt  = field['fmt']
         ptr, ary = '', ''
-        if field['count'] != '':
-            if field['count'][0] == '#':
-                ary = '[%s]' % field['count'][1:]
-            else:
-                ptr = '*'
+        if field['abs_count'] > 0:
+            ary = '[%d]' % field['abs_count']
+        elif field['rel_count'] > 0:
+            ptr = '*'
         if field['type'].startswith('CHAR'):
             field_type = 'CHAR'
             fixed_size = field['type'].replace('CHAR', '')
@@ -198,15 +193,16 @@ def Create_C_Struct(rec_name, rec_fields):
                 ary = '[%s]' % fixed_size
 
         if field_type == 'STRUCT':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        elif field_type == 'VARIANT':  # TODO Don't use
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+            body += '    %-20s%s %s%s;\n' % (field_fmt, ptr, field['name'], ary)
         elif field_type == 'VARIANT_ARRAY':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+            #body += '    %-20s%s %s%s;\n' % (field_fmt, ptr, field['name'], ary)
+            pass # TODO
         elif field_type == 'VARIANT_LIST':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+            #body += '    %-20s%s %s%s;\n' % (field_fmt, ptr, field['name'], ary)
+            pass # TODO
         elif field_type == 'VARIANT_ITEM':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+            #body += '    %-20s%s %s%s;\n' % (field_fmt, ptr, field['name'], ary)
+            pass  # TODO
         else:
             body += '    %-20s%s %s%s;\n' % (field_type, ptr, field['name'], ary)
 
@@ -216,12 +212,10 @@ def Create_C_Struct(rec_name, rec_fields):
     else:
         g_Rec_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
 # ------------------------------------------------------------------------------
-def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=''):
-    if fixed_size != '':
-        if fixed_size[0].isdigit():
-            fixed_size = ', ' + str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
+def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=0):
+    fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
     return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
-            (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
+            (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
 # ------------------------------------------------------------------------------
 def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
     pack_8  = ['UINT8',  'INT8']
@@ -237,17 +231,16 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
     body = ''
     for field in rec_fields[1:]:
 
-        field_loop_max   = Get_Value_For_Defined_By(field['count'], rec_fields)
+        field_loop_max   = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields)
         field_loop_index = '[f]' if field_loop_max else ''
 
-        if field_loop_max:
-            if field_loop_max[0].isdigit():
-                body += in2 + '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
-            else:
-                body += in2 + '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
+        if field['abs_count'] > 0:   # Absolute count; max is an integer.
+            body += in2 + '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
+        elif field_loop_max:         # Relative count; max is a field name.
+            body += in2 + '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
 
-        # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
-        # TODO - For VARIANT, really need to have size info but the current ICD omits this.
+# TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
+# TODO - For VARIANT_XXX, really need to have size info but the current ICD omits this.
 
         if   field['type'] in pack_8:   body += in2 + Get_C_Field_Coder(dir_suffix, '08', field_parent, field['name'], field_loop_index)
         elif field['type'] in pack_16:  body += in2 + Get_C_Field_Coder(dir_suffix, '16', field_parent, field['name'], field_loop_index)
@@ -255,32 +248,33 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         elif field['type'] in pack_64:  body += in2 + Get_C_Field_Coder(dir_suffix, '64', field_parent, field['name'], field_loop_index)
         elif field['type'] == 'CHAR':
             # User may select 'CHAR' to me 1 CHAR, or may combine it with the SIZE_DEFINED_BY cell.
-            body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['size'])
+            body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
         elif field['type'].startswith('CHAR'):
-            fixed_size = field['type'].replace('CHAR', '')
+            fixed_size = PSW_Spreadsheet.as_int(field['type'].replace('CHAR', ''))
             body      += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
         elif field['type'] == 'STRING':
             # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
-            if field['size']:
-                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['size'])
+            if field['abs_count'] > 0:
+                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
             else:
-                # This is for null-terminated strings only.  TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
+                # This is for null-terminated strings only.
+#TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
                 body  += in2 + Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
         elif field['type'] == 'STRUCT':
-            fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
-            if g_rec_fields_by_name.has_key(fmt):
-                child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
+            if g_rec_fields_by_name.has_key(field['fmt']):
+                child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[field['fmt']]
                 body += Create_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
             else:
-                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
+                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], field['fmt'])
         else:
-            body += in2 + '// Cannot yet handle field type <%s> name <%s>\n' % (field['type'], field['name'])
+            body += in2 + '// Cannot handle field type <%s> name <%s>\n' % (field['type'], field['name'])
 
         if field_loop_max:
             body += in2 + '}}\n' # For loop and scoping block closure.
 
-    global g_Coder
+    global g_Proto, g_Coder
     if field_parent == 'data->':
+        g_Proto += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data);\n' % (dir_suffix, rec_name, rec_name)
         g_Coder += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)\n' % (dir_suffix, rec_name, rec_name)
         g_Coder += '{\n'
         g_Coder += in1 + 'UINT16 byte_offset = 0;\n'
@@ -298,15 +292,13 @@ def Load_Recs_Spreadsheet(filename):
     hdr_row_num = 1
     hdr_name_dict = {
         'INDEX'               : 'INDEX',
-        'FIELD_NAME'          : 'FIELD_NAME',
-        'TYPE_CATEGORY'       : 'TYPE_CATEGORY',
-        'UNITS'               : 'UNITS',
-        'FORMAT_TYPE'         : 'FORMAT_TYPE',
+        'NAME'                : 'NAME',
+        'TYPE'                : 'TYPE',
+        'FORMAT'              : 'FORMAT',
         'COUNT_DEFINED_BY'    : 'COUNT_DEFINED_BY',
-        'SIZE_DEFINED_BY'     : 'SIZE_DEFINED_BY',
-        'EXPECTED_VALUE'      : 'EXPECTED_VALUE',
-        'DEFINES_RECORD_TYPE' : 'DEFINES_RECORD_TYPE',
-        'DEFINES_RECORD_SIZE' : 'DEFINES_RECORD_SIZE',
+        'SPECIAL_CONTROL'     : 'SPECIAL_CONTROL',   # MSG_ID, MSG_SIZE[_16|_32], CRC_[16|32]
+        'UNITS'               : 'UNITS',
+        'FIXED_VALUE'         : 'FIXED_VALUE',
         'EXCLUDE_FROM_SIZE'   : 'EXCLUDE_FROM_SIZE',
         'MIN_RANGE'           : 'MIN_RANGE',
         'MAX_RANGE'           : 'MAX_RANGE',
@@ -321,11 +313,11 @@ def Load_Recs_Spreadsheet(filename):
         start_row, end_row = Find_Next_Block(table, start_row)
         rec_name, rec_fields = Process_Block(start_row, table[start_row:end_row])
         g_rec_fields_by_name[rec_name] = rec_fields
+        g_rec_fields_by_order.append(rec_name)
         start_row = end_row
 
-    for rec_name in g_rec_fields_by_name.keys():
+    for rec_name in g_rec_fields_by_order:
         rec_fields = g_rec_fields_by_name[rec_name]
-# TODO skip Aux
         Create_C_Struct(rec_name, rec_fields)
         Create_C_Struct_Coder('Pack',   rec_name, rec_fields)
         Create_C_Struct_Coder('Unpack', rec_name, rec_fields)
@@ -401,40 +393,46 @@ if __name__=='__main__':
     Load_Enums_Spreadsheet(filename)
     Create_Enums()
 
-    filename = 'KC-390_DBD_Recs.xlsx'
+    filename = 'KC-390_DBD_Messages.xlsx'
     Load_Recs_Spreadsheet(filename)
 
     h_text  = '#ifndef INCLUDED_Gen_Structs_h\n'
     h_text += '#define INCLUDED_Gen_Structs_h\n'
-    h_text += '#include "locker_code_base.h"\n'
+    h_text += '#include "locker_core.h"\n'
+    h_text += '/* -- Enums -- */\n'
+    h_text += g_Enum_Dec
     h_text += '/* -- Aux Structs -- */\n'
     h_text += g_Aux_Dec
     h_text += '/* -- Rec Structs -- */\n'
     h_text += g_Rec_Dec
-    h_text += '/* -- Enums -- */\n'
-    h_text += g_Enum_Dec
+    h_text += '/* -- Prototypes -- */\n'
+    h_text += g_Proto
     h_text += '#endif /* INCLUDED_Gen_Structs_h */\n'
 
-    print 'Creating locker_code.h ...'
-    h_file = open('locker_code.h', 'w')
+    auto_gen_basename = 'locker_auto'
+
+    auto_gen_h = auto_gen_basename + '.h'
+    print 'Creating %s ...' % auto_gen_h
+    h_file = open(auto_gen_h, 'w')
     h_file.write(h_text)
     h_file.close()
 
-    print 'Creating locker_code.c ...'
-    c_file = open('locker_code.c', 'w')
-    c_file.write('#include "locker_code.h"\n')
+    auto_gen_c = auto_gen_basename + '.c'
+    print 'Creating %s ...' % auto_gen_c
+    c_file = open(auto_gen_c, 'w')
+    c_file.write('#include "%s"\n' % auto_gen_h)
     c_file.write(g_Coder)
     c_file.close()
 
     t_text  = '#include <stdio.h>\n'
-    t_text  = '#include "locker_code_base.h"\n'
-    t_text  = '#include "locker_code.h"\n'
+    t_text  = '#include "locker_core.h"\n'
     t_text += 'int main(int argc, char** argv)\n'
     t_text += '{\n'
     t_text += '    return 0;\n'
     t_text += '}\n'
 
-    #print 'Creating locker_test.c ...'
-    #t_file = open('locker_test.c', 'w')
+    auto_gen_test_c = auto_gen_basename + '_test.c'
+    #print 'Creating %s ...' % auto_gen_test_c
+    #t_file = open(auto_gen_test_c, 'w')
     #t_file.write(t_text)
     #t_file.close()
