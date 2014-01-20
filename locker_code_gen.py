@@ -17,6 +17,11 @@ Quit      = PSW_Basic_Log.Quit
 # ------------------------------------------------------------------------------
 g_enum = {}
 g_rec_fields_by_name = {}
+g_Coder    = ''
+g_Aux_Dec  = ''
+g_Rec_Dec  = ''
+g_Enum_Dec = ''
+g_Enum_Cnt = 1000
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -52,9 +57,11 @@ def Is_Valid_C_Var(text):
 def Make_Valid_C_Enum(text, is_type = False):
     var = Make_Valid_C_Var(text)
     if is_type:
-        var = 'T_' + var    # Choosing this convention for enum values.  NOT UNIVERSAL
+        var = 'T_%s' % var    # Choosing this convention for enum values.  NOT UNIVERSAL
     else:
-        var = 'E_' + var    # Choosing this convention for enum values.  NOT UNIVERSAL
+        global g_Enum_Cnt
+        var = 'E_%d_%s' % (g_Enum_Cnt, var)   # Choosing this convention for enum values.  NOT UNIVERSAL
+        g_Enum_Cnt += 1
     return var
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -160,38 +167,6 @@ def Find_Next_Block(table, start_row):
         end_row += 1
     return (start_row, end_row)
 # ------------------------------------------------------------------------------
-def Output_C_Struct(rec_name, rec_fields):
-    # Skip rec_field[0] since it is the structure name field.
-    body = ''
-    for field in rec_fields[1:]:
-        fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
-        ptr, ary = '', ''
-        if field['count'] != '':
-            if field['count'][0] == '#':
-                ary = '[%s]' % field['count'][1:]
-            else:
-                ptr = '*'
-        if field['type'] == 'STRUCT':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        elif field['type'] == 'VARIANT':  # TODO Don't use
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        elif field['type'] == 'VARIANT_ARRAY':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        elif field['type'] == 'VARIANT_LIST':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        elif field['type'] == 'VARIANT_ITEM':
-            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
-        else:
-            body += '    %-20s%s %s%s;\n' % (field['type'], ptr, field['name'], ary)
-    print('struct ' + rec_name + ' {\n' + body + '};\n')
-# ------------------------------------------------------------------------------
-def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=''):
-    if fixed_size != '':
-        if fixed_size[0].isdigit():
-            fixed_size = ', ' + str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
-    return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
-            (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
-# ------------------------------------------------------------------------------
 def Get_Value_For_Defined_By(defined_by, rec_fields):
     ''' Used for COUNT_DEFINED_BY or SIZE_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
     if defined_by.startswith('#'):     # Absolute count starts with '#'
@@ -204,7 +179,51 @@ def Get_Value_For_Defined_By(defined_by, rec_fields):
     # Parsing/range error.
     return None
 # ------------------------------------------------------------------------------
-def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
+def Create_C_Struct(rec_name, rec_fields):
+    # Skip rec_field[0] since it is the structure name field.
+    body = ''
+    for field in rec_fields[1:]:
+        field_type = field['type']
+        fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
+        ptr, ary = '', ''
+        if field['count'] != '':
+            if field['count'][0] == '#':
+                ary = '[%s]' % field['count'][1:]
+            else:
+                ptr = '*'
+        if field['type'].startswith('CHAR'):
+            field_type = 'CHAR'
+            fixed_size = field['type'].replace('CHAR', '')
+            if fixed_size != '':
+                ary = '[%s]' % fixed_size
+
+        if field_type == 'STRUCT':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field_type == 'VARIANT':  # TODO Don't use
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field_type == 'VARIANT_ARRAY':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field_type == 'VARIANT_LIST':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        elif field_type == 'VARIANT_ITEM':
+            body += '    %-20s%s %s%s;\n' % (fmt, ptr, field['name'], ary)
+        else:
+            body += '    %-20s%s %s%s;\n' % (field_type, ptr, field['name'], ary)
+
+    global g_Aux_Dec, g_Rec_Dec
+    if rec_fields[0]['type'] == 'Aux':
+        g_Aux_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
+    else:
+        g_Rec_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
+# ------------------------------------------------------------------------------
+def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=''):
+    if fixed_size != '':
+        if fixed_size[0].isdigit():
+            fixed_size = ', ' + str(PSW_Spreadsheet.as_int(fixed_size))  # Avoid floats for fixed_size.
+    return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
+            (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size)
+# ------------------------------------------------------------------------------
+def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
     pack_8  = ['UINT8',  'INT8']
     pack_16 = ['UINT16', 'INT16']
     pack_32 = ['UINT32', 'INT32', 'FLOAT32']
@@ -222,7 +241,10 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         field_loop_index = '[f]' if field_loop_max else ''
 
         if field_loop_max:
-            body += in2 + '{ for(int f = 0; f < %s; f++) {\n' % field_loop_max
+            if field_loop_max[0].isdigit():
+                body += in2 + '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
+            else:
+                body += in2 + '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
 
         # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
         # TODO - For VARIANT, really need to have size info but the current ICD omits this.
@@ -248,7 +270,7 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
             fmt = field['fmt'].replace('STRUCT_', '')  # TODO kludge
             if g_rec_fields_by_name.has_key(fmt):
                 child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[fmt]
-                body += Output_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
+                body += Create_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
             else:
                 body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], fmt)
         else:
@@ -257,14 +279,15 @@ def Output_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         if field_loop_max:
             body += in2 + '}}\n' # For loop and scoping block closure.
 
+    global g_Coder
     if field_parent == 'data->':
-        print('UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)' % (dir_suffix, rec_name, rec_name))
-        print('{')
-        print(in1 + 'UINT16 byte_offset = 0;')
-        print(in1 + 'if (data != 0) {')
-        print(body + in1 + '}')
-        print(in1 + 'return byte_offset;  // Actual length of processed buffer.')
-        print('}')
+        g_Coder += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)\n' % (dir_suffix, rec_name, rec_name)
+        g_Coder += '{\n'
+        g_Coder += in1 + 'UINT16 byte_offset = 0;\n'
+        g_Coder += in1 + 'if (data != 0) {\n'
+        g_Coder += body + in1 + '}\n'
+        g_Coder += in1 + 'return byte_offset;  // Actual length of processed buffer.\n'
+        g_Coder += '}\n'
     else:
         return body
 # ------------------------------------------------------------------------------
@@ -300,13 +323,12 @@ def Load_Recs_Spreadsheet(filename):
         g_rec_fields_by_name[rec_name] = rec_fields
         start_row = end_row
 
-    print g_rec_fields_by_name.keys()
     for rec_name in g_rec_fields_by_name.keys():
         rec_fields = g_rec_fields_by_name[rec_name]
 # TODO skip Aux
-        Output_C_Struct(rec_name, rec_fields)
-        Output_C_Struct_Coder('Pack',   rec_name, rec_fields)
-        Output_C_Struct_Coder('Unpack', rec_name, rec_fields)
+        Create_C_Struct(rec_name, rec_fields)
+        Create_C_Struct_Coder('Pack',   rec_name, rec_fields)
+        Create_C_Struct_Coder('Unpack', rec_name, rec_fields)
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -357,7 +379,8 @@ def Load_Enums_Spreadsheet(filename):
             # TODO Note that C allows for more than 1 enum name to be assigned to a given int value.
             g_enum[curr_enum].append([int(value), Make_Valid_C_Enum(row['ENUM_B'])])
 # ------------------------------------------------------------------------------
-def Output_Enums():
+def Create_Enums():
+    global g_Enum_Dec
     in1 = '    '
     in2 = in1 + in1
     for enum_type in g_enum:
@@ -365,7 +388,8 @@ def Output_Enums():
         body = ''
         for enum in g_enum[enum_type]:
             body += in1 + '%-30s = %s,\n' % (enum[1], enum[0])
-        print('typedef enum %s {\n%s};\n' % (enum_type, body))
+        body += in1 + enum_type + '_MAX\n'
+        g_Enum_Dec += 'typedef enum {\n%s} %s;\n' % (body, enum_type)
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # MAIN
@@ -375,7 +399,42 @@ if __name__=='__main__':
 
     filename = 'KC-390_DBD_Enums.xlsx'
     Load_Enums_Spreadsheet(filename)
-    #Output_Enums()
+    Create_Enums()
 
     filename = 'KC-390_DBD_Recs.xlsx'
     Load_Recs_Spreadsheet(filename)
+
+    h_text  = '#ifndef INCLUDED_Gen_Structs_h\n'
+    h_text += '#define INCLUDED_Gen_Structs_h\n'
+    h_text += '#include "locker_code_base.h"\n'
+    h_text += '/* -- Aux Structs -- */\n'
+    h_text += g_Aux_Dec
+    h_text += '/* -- Rec Structs -- */\n'
+    h_text += g_Rec_Dec
+    h_text += '/* -- Enums -- */\n'
+    h_text += g_Enum_Dec
+    h_text += '#endif /* INCLUDED_Gen_Structs_h */\n'
+
+    print 'Creating locker_code.h ...'
+    h_file = open('locker_code.h', 'w')
+    h_file.write(h_text)
+    h_file.close()
+
+    print 'Creating locker_code.c ...'
+    c_file = open('locker_code.c', 'w')
+    c_file.write('#include "locker_code.h"\n')
+    c_file.write(g_Coder)
+    c_file.close()
+
+    t_text  = '#include <stdio.h>\n'
+    t_text  = '#include "locker_code_base.h"\n'
+    t_text  = '#include "locker_code.h"\n'
+    t_text += 'int main(int argc, char** argv)\n'
+    t_text += '{\n'
+    t_text += '    return 0;\n'
+    t_text += '}\n'
+
+    #print 'Creating locker_test.c ...'
+    #t_file = open('locker_test.c', 'w')
+    #t_file.write(t_text)
+    #t_file.close()

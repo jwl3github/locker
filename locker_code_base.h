@@ -14,6 +14,9 @@ typedef long               INT32;
 typedef float              FLOAT32;
 /*typedef double             FLOAT64;*/
 
+typedef char               CHAR;
+typedef char*              STRING;
+
 extern UINT16 Pack_Endian_08(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
 extern UINT16 Pack_Endian_16(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
 extern UINT16 Pack_Endian_32(BYTE buffer[], const UINT16 buffer_max, UINT16 byte_offset, BYTE* value);
