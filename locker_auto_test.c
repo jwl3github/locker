@@ -8,16 +8,15 @@ void test_T_Ping_Message()
 {
     UINT16 out_offset = 0;
     UINT16 in_offset = 0;
-
     T_Ping_Message* net_msg = 0;
-    T_Ping_Message out_msg;
-    T_Ping_Message in_msg;
+    T_Ping_Message  out_msg;
+    T_Ping_Message  in_msg;
 
     out_msg.Sync            = 0x55AA;
     out_msg.Message_ID      = (UINT16) E_1001_Ping_Message;
     out_msg.Source_ID       = (UINT16) E_1064_CHC_D;
     out_msg.Dest_ID         = (UINT16) E_1068_LCU_C_1;
-    out_msg.Word_Count      = (UINT16) sizeof(out_msg);   /* Fixed length */
+    out_msg.Word_Count      = (UINT16) sizeof(out_msg) / 2;  /* Fixed length */
     out_msg.Packet_ID_Seq   = 1;
     out_msg.Header_CR       = Calculate_CRC16((BYTE*)&out_msg, sizeof(out_msg) - sizeof(UINT16));  /* TODO is this correct size for CRC16 compute? */
 

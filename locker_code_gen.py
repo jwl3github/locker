@@ -9,6 +9,7 @@ Log_Warn  = PSW_Basic_Log.Log_Warn
 Log_Error = PSW_Basic_Log.Log_Error
 Log_Fatal = PSW_Basic_Log.Log_Fatal
 Quit      = PSW_Basic_Log.Quit
+as_int    = PSW_Spreadsheet.as_int
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -24,6 +25,8 @@ g_Aux_Dec  = ''
 g_Rec_Dec  = ''
 g_Enum_Dec = ''
 g_Enum_Cnt = 1000
+g_Test_Funcs = ''
+g_Test_Calls = ''
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -128,25 +131,28 @@ def Process_Block(block_start_row, block_cells):
         if not Validate_Row(block_start_row, field_index, row):
             continue
 
-        field = { 'type':        Make_Valid_C_Var(row['TYPE']),
-                  'name':        Make_Valid_C_Var(row['NAME']),
-                  'fmt':         Make_Valid_C_Var(row['FORMAT']),
-                  'rel_count':   0,
-                  'abs_count':   0,
-                  'value':       str(row['FIXED_VALUE']),
-                  'msg_id':      row['SPECIAL_CONTROL'] == 'MSG_ID',
-                  'msg_size_16': row['SPECIAL_CONTROL'] == 'MSG_SIZE_16',
-                  'msg_size_32': row['SPECIAL_CONTROL'] == 'MSG_SIZE_32',
-                  'crc_16':      row['SPECIAL_CONTROL'] == 'CRC_16',
-                  'crc_32':      row['SPECIAL_CONTROL'] == 'CRC_32',
+        field = { 'type':          Make_Valid_C_Var(row['TYPE']),
+                  'name':          Make_Valid_C_Var(row['NAME']),
+                  'fmt':           Make_Valid_C_Var(row['FORMAT']),
+                  'rel_count':     0,
+                  'abs_count':     0,
+                  'value':         str(row['FIXED_VALUE']),
+                  'special':       row['SPECIAL_CONTROL'],
+                  'msg_id':        row['SPECIAL_CONTROL'] == 'MSG_ID',
+                  'msg_size_8':    row['SPECIAL_CONTROL'] == 'MSG_SIZE_8',
+                  'msg_size_16':   row['SPECIAL_CONTROL'] == 'MSG_SIZE_16',
+                  'msg_size_32':   row['SPECIAL_CONTROL'] == 'MSG_SIZE_32',
+                  'crc_16':        row['SPECIAL_CONTROL'] == 'CRC_16',
+                  'crc_32':        row['SPECIAL_CONTROL'] == 'CRC_32',
+                  'size_excludes': row['EXCLUDE_FROM_SIZE'] == 'TRUE',
         }
 
         count = str(row['COUNT_DEFINED_BY'])
         if count != '':
             if count[0] == '#':
-                field['abs_count'] = PSW_Spreadsheet.as_int(count[1:])
+                field['abs_count'] = as_int(count[1:])
             else:
-                field['rel_count'] = PSW_Spreadsheet.as_int(count)
+                field['rel_count'] = as_int(count)
 
         if row['INDEX'] == 0:
             Log_Debug('Processing new block Record Type <%s> Record Name <%s>' % (field['type'], field['fmt']))
@@ -158,6 +164,20 @@ def Process_Block(block_start_row, block_cells):
 
         rec_fields.append(field)
         field_index += 1
+
+    for field in rec_fields:
+        if field['special'] in ('MSG_SIZE_16', 'MSG_SIZE_32'):
+            fixed, size = Compute_Fixed_Size(rec_name, rec_fields)
+            if fixed and (field['value'] == ''):
+                field['value'] = str(size)
+            elif fixed and (as_int(field['value']) != size):
+                Log_Warn('FIXED_VALUE <%s> for SPECIAL_CONTROL <%s> does not match computed value <%d>' %
+                        (field['value'], field['special'], size))
+                field['value'] = str(size)
+            elif not fixed and (row['FIXED_VALUE'] != ''):
+                Log_Warn('FIXED_VALUE <%s> for SPECIAL_CONTROL <%s> - ignored since message struct is not a fixed size.' %
+                        (field['value'], field['special']))
+                field['value'] = ''
 
     if rec_name == '':
         Log_Error('Missing INDEX [0] Record TYPE or FORMAT - start_row <%d>' % (block_start_row))
@@ -212,10 +232,118 @@ def Create_C_Struct(rec_name, rec_fields):
     else:
         g_Rec_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
 # ------------------------------------------------------------------------------
+def Compute_Fixed_Size(rec_name, rec_fields):
+    type_sizes = {
+            'UINT8':8,   'INT8':8,  'CHAR':8,
+            'UINT16':16, 'INT16':16,
+            'UINT32':32, 'INT32':32, 'FLOAT32':32,
+            'UINT64':64, 'INT64':64, 'FLOAT64':64,
+            }
+    bit_size = 0
+    for field in rec_fields[1:]:
+        if field['size_excludes']:
+            continue
+        elif field['rel_count'] > 0:
+            return False, 0
+        else:
+            mult = field['abs_count'] if field['abs_count'] > 0 else 1
+
+        if type_sizes.has_key(field['type']):
+            bit_size += type_sizes[field['type']] * mult
+        elif field['type'].startswith('CHAR'):
+            bit_size += as_int(field['type'].replace('CHAR','')) * 8
+        elif field['type'] == 'STRING':
+            return False, 0
+        elif field['type'] == 'STRUCT':
+            if g_rec_fields_by_name.has_key(field['fmt']):
+                aux_fixed, aux_size = Compute_Fixed_Size(field['fmt'], g_rec_fields_by_name[field['fmt']])
+                if aux_fixed:
+                    bit_size += aux_size
+                else:
+                    return False, 0
+    return True, bit_size/8
+# ------------------------------------------------------------------------------
+def Create_C_Test_Function(rec_name, rec_fields):
+    # Skip rec_field[0] since it is the structure name field.
+    if rec_fields[0]['type'] == 'Aux':
+        return  # No test driver needed for Aux
+
+    fixed, size = Compute_Fixed_Size(rec_name, rec_fields)
+    field_num = 0
+    body = ''
+    for field in rec_fields[1:]:
+        field_type = field['type']
+        field_fmt  = field['fmt']
+        field_num += 1
+        #ptr, ary = '', ''
+        #if field['abs_count'] > 0:
+        #    ary = '[%d]' % field['abs_count']
+        #elif field['rel_count'] > 0:
+        #    ptr = '*'
+        #if field['type'].startswith('CHAR'):
+        #    field_type = 'CHAR'
+        #    fixed_size = field['type'].replace('CHAR', '')
+        #    if fixed_size != '':
+        #        ary = '[%s]' % fixed_size
+
+        if field_type == 'VARIANT_ARRAY':
+            return # TODO
+        elif field_type == 'VARIANT_LIST':
+            return # TODO
+        elif field_type == 'VARIANT_ITEM':
+            return # TODO
+        elif field_type == 'STRUCT':
+            return # TODO
+        elif field['value']:   # Handle Sync and MSG_ID and any specified MSG_SIZE_x
+            out_body += '    out_msg.%-20s = %s;\n' % (field['name'], field['value'])
+        elif field['msg_size_8']:
+            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
+            size_bytes = 1
+        elif field['msg_size_16']:
+            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
+            size_bytes = 2
+        elif field['msg_size_32']:
+            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
+            size_bytes = 4
+        elif field['crc_16'] or field['crc_32']:
+            if fixed:
+                out_body += '    out_msg.%-20s = Calculate_CRC16((BYTE*)&out_msg, %d - sizeof(UINT16));\n' % (field['name'], size, div)
+            else:
+                out_body += '    out_msg.%-20s = 0; // TODO - Not a fixed size, need CRC compute method.\n' % (field['name'])
+
+    global g_Test_Funcs, g_Test_Calls
+    msg_name = rec_fields[0]['format']
+    g_Test_Calls += '    if (test_%s() == 1) {pass++;} else {fail++;}\n' % msg_name
+
+    g_Test_Funcs += 'UINT16 test_%s()\n' % msg_name
+    g_Test_Funcs += '{\n'
+    g_Test_Funcs += '    UINT16 ok = 1;\n'
+    g_Test_Funcs += '    UINT16 out_offset = 0;\n'
+    g_Test_Funcs += '    UINT16 in_offset = 0;\n'
+    g_Test_Funcs += '    %s* net_msg = 0;\n' % msg_name
+    g_Test_Funcs += '    %s  out_msg = 0;\n' % msg_name
+    g_Test_Funcs += '    %s   in_msg = 0;\n' % msg_name
+    g_Test_Funcs += out_body
+    g_Test_Funcs += '    out_offset = Pack_%s(buffer, buffer_max, &out_msg);\n' % msg_name
+    g_Test_Funcs += '    net_msg    = (%s*) buffer;\n' % msg_name
+    g_Test_Funcs += '    in_offset  = Unpack_%s(buffer, buffer_max, &in_msg);\n' % msg_name
+    g_Test_Funcs += in_body
+    g_Test_Funcs += '    return ok;\n'
+    g_Test_Funcs += '}\n'
+
+# ------------------------------------------------------------------------------
 def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=0):
     fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
     return 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
             (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
+# ------------------------------------------------------------------------------
+def Get_C_Field_Value_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, field_type, fixed_value, fixed_size=0):
+    ''' Used for fields that have a FIXED_VALUE or are computed fixed size. '''
+    body  = '%s%s%s = (%s) %s;\n' % (field_parent, field_name, field_loop_index, field_type, fixed_value)
+    fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
+    body += '        byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
+             (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
+    return body
 # ------------------------------------------------------------------------------
 def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
     pack_8  = ['UINT8',  'INT8']
@@ -226,31 +354,46 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
     # Note: All fields are assumed to be validated by this point, so
     #       many possible integrity checks are omitted.
 
-    in1 = '    '
-    in2 = in1 + in1
-    body = ''
-    for field in rec_fields[1:]:
+    msg_size_fixed, msg_size = Compute_Fixed_Size(rec_name, rec_fields)
+    msg_size_needed, msg_size_offset, msg_size_packer = False, 0, ''
 
+    crc_field_num = 0
+    in1  = '    '
+    in2  = in1 + in1
+    body = ''
+    field_num = 0
+    for field in rec_fields[1:]:
+        field_num       += 1
         field_loop_max   = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields)
         field_loop_index = '[f]' if field_loop_max else ''
+        size_suffix      = ''
 
         if field['abs_count'] > 0:   # Absolute count; max is an integer.
             body += in2 + '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
         elif field_loop_max:         # Relative count; max is a field name.
             body += in2 + '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
 
-# TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
-# TODO - For VARIANT_XXX, really need to have size info but the current ICD omits this.
+        if   field['type'] in pack_8:   size_suffix = '08'
+        elif field['type'] in pack_16:  size_suffix = '16'
+        elif field['type'] in pack_32:  size_suffix = '32'
+        elif field['type'] in pack_64:  size_suffix = '64'
 
-        if   field['type'] in pack_8:   body += in2 + Get_C_Field_Coder(dir_suffix, '08', field_parent, field['name'], field_loop_index)
-        elif field['type'] in pack_16:  body += in2 + Get_C_Field_Coder(dir_suffix, '16', field_parent, field['name'], field_loop_index)
-        elif field['type'] in pack_32:  body += in2 + Get_C_Field_Coder(dir_suffix, '32', field_parent, field['name'], field_loop_index)
-        elif field['type'] in pack_64:  body += in2 + Get_C_Field_Coder(dir_suffix, '64', field_parent, field['name'], field_loop_index)
+        if dir_suffix == 'Pack':
+            if field['value'] != '':
+                body += in2 + Get_C_Field_Value_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index, field['type'], field['value'])
+                continue
+            if field['crc_16'] or field['crc_32']:
+                crc_field_num = field_num
+        else:
+            pass # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
+
+        if size_suffix != '':
+            body += in2 + Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index)
         elif field['type'] == 'CHAR':
             # User may select 'CHAR' to me 1 CHAR, or may combine it with the SIZE_DEFINED_BY cell.
             body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
         elif field['type'].startswith('CHAR'):
-            fixed_size = PSW_Spreadsheet.as_int(field['type'].replace('CHAR', ''))
+            fixed_size = as_int(field['type'].replace('CHAR', ''))
             body      += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
         elif field['type'] == 'STRING':
             # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
@@ -279,7 +422,15 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         g_Coder += '{\n'
         g_Coder += in1 + 'UINT16 byte_offset = 0;\n'
         g_Coder += in1 + 'if (data != 0) {\n'
-        g_Coder += body + in1 + '}\n'
+        g_Coder += body
+        # TODO - insert dynamic size (if not fixed) and CRC data last
+        #if not msg_size_fixed:
+        #    g_Coder += in2 + '{ UINT16 temp_byte_offset = byte_offset;\n'
+        #    g_Coder += in2 + '  byte_offset = %d;\n' %
+        #    g_Coder += in2 + '  ' + Get_C_Field_Coder(dir_suffix, msg_size_packer, field_parent, field['name'], '')
+        #    g_Coder += in2 + '  byte_offset = temp_byte_offset; }\n'
+        #if not msg_crc_offset:
+        g_Coder += in1 + '}\n'
         g_Coder += in1 + 'return byte_offset;  // Actual length of processed buffer.\n'
         g_Coder += '}\n'
     else:
@@ -362,7 +513,7 @@ def Load_Enums_Spreadsheet(filename):
                 continue
         except Exception as ex:
             #Log_Debug(ex)
-            value = PSW_Spreadsheet.as_int(row['ENUM_A'])
+            value = as_int(row['ENUM_A'])
 
         if (row['ENUM_B'] == ''):
             Log_Error('%s(%d) - Enum value <%d> text is blank (invalid).' % (filename, row_num, value))
@@ -425,9 +576,16 @@ if __name__=='__main__':
     c_file.close()
 
     t_text  = '#include <stdio.h>\n'
-    t_text  = '#include "locker_core.h"\n'
+    t_text += '#include "locker_core.h"\n'
+    t_text += 'BYTE   buffer[1024];\n'
+    t_text += 'UINT16 buffer_max = (UINT16) sizeof(buffer);\n'
+    t_text += g_Test_Funcs
     t_text += 'int main(int argc, char** argv)\n'
     t_text += '{\n'
+    t_text += '    UINT16 pass = 0;\n'
+    t_text += '    UINT16 fail = 0;\n'
+    t_text += g_Test_Calls
+    t_text += '    printf("* Final pass=<%d> fail=<%d>\n", pass, fail);\n'
     t_text += '    return 0;\n'
     t_text += '}\n'
 

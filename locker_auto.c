@@ -3,10 +3,13 @@ UINT16 Pack_T_Acknowledge_Message(BYTE buffer[], const UINT16 buffer_max, T_Ackn
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 1.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ACK_NAK));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->NAK_Reason));
@@ -35,10 +38,13 @@ UINT16 Pack_T_Ping_Message(BYTE buffer[], const UINT16 buffer_max, T_Ping_Messag
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 2.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -63,10 +69,13 @@ UINT16 Pack_T_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 3.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -91,10 +100,13 @@ UINT16 Pack_T_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 4.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 61;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Boot_Loader_Active));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->BIT_Status));
@@ -131,10 +143,13 @@ UINT16 Pack_T_Control_Panel_State_Request_Message(BYTE buffer[], const UINT16 bu
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 10.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 25;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Aft_Pair_16_Locked_LED));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Aft_Pair_16_Fault_LED));
@@ -181,10 +196,13 @@ UINT16 Pack_T_Control_Panel_State_Response_Message(BYTE buffer[], const UINT16 b
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 11.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 27;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CBIT_Passed));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_1_Pressed));
@@ -235,10 +253,13 @@ UINT16 Pack_T_Control_Panel_BIT_Request_Message(BYTE buffer[], const UINT16 buff
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 12.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -263,10 +284,13 @@ UINT16 Pack_T_Control_Panel_BIT_Response_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 13.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 62;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_BIT_Passed));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Power_Fault));
@@ -307,10 +331,13 @@ UINT16 Pack_T_Display_Configuration_Command_Message(BYTE buffer[], const UINT16 
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 50.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -335,7 +362,9 @@ UINT16 Pack_T_Set_LCAS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 51.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -399,10 +428,13 @@ UINT16 Pack_T_Set_SPDU_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 52.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Light));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -429,7 +461,9 @@ UINT16 Pack_T_Set_Event_Text_Command_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 53.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -467,10 +501,13 @@ UINT16 Pack_T_Set_Main_Selection_Command_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 54.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Area));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -497,7 +534,9 @@ UINT16 Pack_T_Update_Window_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 55.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -579,10 +618,13 @@ UINT16 Pack_T_Show_Dialog_Command_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 56.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 122;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title), 26);
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_1), 26);
@@ -619,10 +661,13 @@ UINT16 Pack_T_Set_Mode_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 57.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mode));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -649,7 +694,9 @@ UINT16 Pack_T_Add_Pallet_Command_Message(BYTE buffer[], const UINT16 buffer_max,
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 58.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -725,7 +772,9 @@ UINT16 Pack_T_Add_Platform_Command_Message(BYTE buffer[], const UINT16 buffer_ma
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 59.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -801,7 +850,9 @@ UINT16 Pack_T_Add_CDS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 60.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -881,7 +932,9 @@ UINT16 Pack_T_Add_Logistics_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 61.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -959,7 +1012,9 @@ UINT16 Pack_T_Delete_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer_ma
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 62.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -995,10 +1050,13 @@ UINT16 Pack_T_Add_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 63.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Forward_Lock_Position));
@@ -1027,10 +1085,13 @@ UINT16 Pack_T_Delete_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 64.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -1057,7 +1118,9 @@ UINT16 Pack_T_Set_Lock_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 65.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1105,7 +1168,9 @@ UINT16 Pack_T_Set_CRG_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 66.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1153,10 +1218,13 @@ UINT16 Pack_T_Set_PDM_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 67.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Left_PDM_Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Right_PDM_Icon));
@@ -1185,10 +1253,13 @@ UINT16 Pack_T_Set_Towplate_Icon_Command_Message(BYTE buffer[], const UINT16 buff
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 68.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -1215,10 +1286,13 @@ UINT16 Pack_T_Highlight_Button_Command_Message(BYTE buffer[], const UINT16 buffe
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 69.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -1245,7 +1319,9 @@ UINT16 Pack_T_Highlight_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 70.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1301,7 +1377,9 @@ UINT16 Pack_T_Highlight_Event_Command_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 71.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1357,7 +1435,9 @@ UINT16 Pack_T_Add_Event_Command_Message(BYTE buffer[], const UINT16 buffer_max, 
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 72.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1401,7 +1481,9 @@ UINT16 Pack_T_Delete_Event_Command_Message(BYTE buffer[], const UINT16 buffer_ma
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 73.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -1437,10 +1519,13 @@ UINT16 Pack_T_Control_Panel_Button_Press_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 78.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 22;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Button));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_Button));
@@ -1475,10 +1560,13 @@ UINT16 Pack_T_CHC_Display_BIT_Request_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 79.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 19;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_BIT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCP_RCP_BIT));
@@ -1511,10 +1599,13 @@ UINT16 Pack_T_CHC_Display_BIT_Response_Message(BYTE buffer[], const UINT16 buffe
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 80.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 113;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_CHC_D_BIT_Passed));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_CP_BIT_Fail));
@@ -1575,10 +1666,13 @@ UINT16 Pack_T_System_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 81.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 23;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHADS_Operational));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHADS_Active));
@@ -1617,10 +1711,13 @@ UINT16 Pack_T_Lock_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_ma
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 82.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 78;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADS_Lock_Left_1));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADS_Lock_Left_2));
@@ -1709,10 +1806,13 @@ UINT16 Pack_T_Device_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 83.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 35;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_Left_1));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_Left_2));
@@ -1779,10 +1879,13 @@ UINT16 Pack_T_LRU_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 84.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 57;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_C_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_M_Fault));
@@ -1861,10 +1964,13 @@ UINT16 Pack_T_Commands_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, 
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 85.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 50;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ACTIVE_SAFE));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_RED));
@@ -1959,7 +2065,9 @@ UINT16 Pack_T_Event_Data_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 86.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -2147,7 +2255,9 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 87.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -2333,7 +2443,9 @@ UINT16 Pack_T_Release_Force_Periodic_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 88.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -2393,10 +2505,13 @@ UINT16 Pack_T_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buffer_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 100.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 20;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Side));
@@ -2427,10 +2542,13 @@ UINT16 Pack_T_Set_PDM_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 101.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 16;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->PDM));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -2457,10 +2575,13 @@ UINT16 Pack_T_Set_Towplate_State_Command_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 102.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Open_Link));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Close_Link));
@@ -2493,10 +2614,13 @@ UINT16 Pack_T_Set_CRG_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 103.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Operation));
@@ -2525,10 +2649,13 @@ UINT16 Pack_T_Monitor_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 104.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 28;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_M_BIT_Included));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Left_Lock_BIT));
@@ -2571,7 +2698,9 @@ UINT16 Pack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_ma
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 105.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -2727,10 +2856,13 @@ UINT16 Pack_T_Command_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 106.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 30;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->WOW));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADS_OK));
@@ -2785,10 +2917,13 @@ UINT16 Pack_T_Monitor_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 107.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 44;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_M_BIT_Passed));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_BIT));
@@ -2961,10 +3096,13 @@ UINT16 Pack_T_Mission_Parameter_Command_Message(BYTE buffer[], const UINT16 buff
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 108.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Variant.Event_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Event_Data>
@@ -3185,10 +3323,13 @@ UINT16 Pack_T_LCU_Status_Request_Message(BYTE buffer[], const UINT16 buffer_max,
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 150.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -3213,7 +3354,9 @@ UINT16 Pack_T_LCU_Status_Response_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 151.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
@@ -3275,10 +3418,13 @@ UINT16 Pack_T_LCU_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 152.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 26;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Actuator_Serial_Switch_IBIT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Actuator_Serial_Switch_IBIT));
@@ -3319,10 +3465,13 @@ UINT16 Pack_T_LCU_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 153.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 38;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_BIT_Passed));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Actuator_Extended));
@@ -3383,10 +3532,13 @@ UINT16 Pack_T_LCU_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buf
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 154.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 46;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_State));
@@ -3443,10 +3595,13 @@ UINT16 Pack_T_LCU_Force_Request_Message(BYTE buffer[], const UINT16 buffer_max, 
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 155.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -3471,10 +3626,13 @@ UINT16 Pack_T_LCU_Force_Response_Message(BYTE buffer[], const UINT16 buffer_max,
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 156.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Dog_Displacement_Force_Sensor));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Dog_Displacement_Force_Sensor));
@@ -3543,10 +3701,13 @@ UINT16 Pack_T_SOFTWARE_FIELD_LOAD_Message(BYTE buffer[], const UINT16 buffer_max
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 250.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Subformat_Data.Subformat_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Subformat_Data>
@@ -3685,10 +3846,13 @@ UINT16 Pack_T_Maintenance_Data_Request_Message(BYTE buffer[], const UINT16 buffe
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 200.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
+        data->Word_Count = (UINT16) 18;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Transmit_Data));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Tx_ARINC_Data));
@@ -3721,7 +3885,9 @@ UINT16 Pack_T_Maintenance_Data_ARINC_Periodic_Message(BYTE buffer[], const UINT1
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
+        data->Sync = (UINT16) 0x55AA;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sync));
+        data->Message_ID = (UINT16) 201.0;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Message_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
