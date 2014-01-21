@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <malloc.h>
 #include "locker_core.h"
 
 #ifdef CPU_BIG_ENDIAN
@@ -5,6 +7,30 @@
 #else
 #define G_SWAP_ENDIAN  (1 == 1) /* Packed buffers are always big (network) endian. */
 #endif 
+
+/* ---------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------- */
+/* -- Utilities -- */
+/* ---------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------- */
+UINT16 Buffer_Strlen(BYTE* buffer, UINT16 buffer_offset, UINT16 buffer_max)
+{
+    UINT16 curr_offset = buffer_offset;
+
+    if (buffer != 0) {
+        for ( ; curr_offset < buffer_max; curr_offset++) {
+            if (buffer[curr_offset] == 0) {
+                break;
+            }
+        }
+    }
+    return (curr_offset - buffer_offset);
+}
+/* ---------------------------------------------------------------------------- */
+BYTE* Mem_Alloc(UINT16 item_count, UINT16 item_size)
+{
+    return (BYTE*) calloc(item_count, item_size);
+}
 
 /* ---------------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------------- */

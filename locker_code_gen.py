@@ -112,10 +112,11 @@ def Validate_Row(block_start_row, field_index, row):
                 (row['FIXED_VALUE'], block_start_row))
         row['FIXED_VALUE'] = ''
 
-    # COUNT_DEFINED_BY must be '#<num>' or else INDEX [1 .. this_row_index-1] to field of [U]INT type
-    # SPECIAL_CONTROL fields must be regular [U]INT#
-    # Cannot have an FIXED_VALUE or DEFAULT_VALUE for field with COUNT_DEFINED_BY or type STRUCT
-    # MIN_RANGE/MAX_RANGE only work for [U]INT and FLOAT
+    # TODO STRING cannot have a COUNT_DEFINED_BY; if it occurs, error with message 'use CHAR instead'
+    # TODO COUNT_DEFINED_BY must be '#<num>' or else INDEX [1 .. this_row_index-1] to field of [U]INT type
+    # TODO SPECIAL_CONTROL fields must be regular [U]INT#
+    # TODO Cannot have an FIXED_VALUE or DEFAULT_VALUE for field with COUNT_DEFINED_BY or type STRUCT
+    # TODO MIN_RANGE/MAX_RANGE only work for [U]INT and FLOAT
 
     return True  # No error or error can be ignored/worked around.
 # ------------------------------------------------------------------------------
@@ -302,22 +303,6 @@ def Create_C_Test_Function(rec_name, rec_fields):
             return # TODO
         elif field_type == 'STRUCT':
             return # TODO
-        elif field['value']:   # Handle Sync and MSG_ID and any specified MSG_SIZE_x
-            out_body += '    out_msg.%-20s = %s;\n' % (field['name'], field['value'])
-        elif field['msg_size_8']:
-            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
-            size_bytes = 1
-        elif field['msg_size_16']:
-            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
-            size_bytes = 2
-        elif field['msg_size_32']:
-            size_fixed, size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:field_num])
-            size_bytes = 4
-        elif field['crc_16'] or field['crc_32']:
-            if fixed:
-                out_body += '    out_msg.%-20s = Calculate_CRC16((BYTE*)&out_msg, %d - sizeof(UINT16));\n' % (field['name'], size, div)
-            else:
-                out_body += '    out_msg.%-20s = 0; // TODO - Not a fixed size, need CRC compute method.\n' % (field['name'])
 
     global g_Test_Funcs, g_Test_Calls
     msg_name = rec_fields[0]['format']
@@ -420,8 +405,6 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
 
         if field['abs_count'] > 0:   # Absolute count; max is an integer.
             body += '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
-        elif field_loop_max:         # Relative count; max is a field name.
-            body += '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
 
         # Handle special conditions:
         #    1) For Pack: assign any FIXED_VALUE directly to the struct field   TODO - Uh oh... what about error testing?!
@@ -442,7 +425,23 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
 # TODO - In this case, the loader should calculate field['crc_start_field'] and field['crc_end_field'] and the byte offsets would need to be determined last.
                 msg_crc_field_num = field_num
                 continue # Do not output a CRC coder... it will be done last in the subsequent code block.
-        else:
+
+        elif dir_suffix == 'Unpack':
+            alloc_type = field['fmt'] if field['type'] == 'STRUCT' else field['type']
+
+            if field['abs_count'] > 0:
+                body += '%s%s = (%s*) Mem_Alloc(%d, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field['abs_count'], alloc_type)
+                body += '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
+
+            elif field_loop_max:         # Relative count; field_loop_max is a field name.
+# TODO The 'sizeof()' will not work if Aux STRUCT is dynamic sized
+                body += '%s%s = (%s*) Mem_Alloc(%s, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field_loop_max, alloc_type)
+                body += '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
+
+        elif field['type'] == 'STRING':
+            # Pure null-terminated string.
+            body += '%s%s = (CHAR*) Mem_Alloc(1+Buffer_Strlen(buffer, buffer_offset, buffer_max), 1));\n' % (field_parent, field['name'], field_loop_max)
+
             pass # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
 
         # Handle standard type-based encoder/decoder calls.
@@ -458,14 +457,10 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
             body      += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
 
         elif field['type'] == 'STRING':
-            # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
-            if field['abs_count'] > 0:
-                # Treat the same as CHARx if a fixed length is given.
-                body  += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
-            else:
-                # This is for null-terminated strings only.
+            # Only allow STRING for null-terminated data with no fixed length.
+            # Allowing STRING to be an alias for CHAR# creates many complicating if/then checks in this script.
 #TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
-                body  += Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
+            body  += Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
 
         elif field['type'] == 'STRUCT':
             if g_rec_fields_by_name.has_key(field['fmt']):
