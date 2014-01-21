@@ -17,16 +17,18 @@ as_int    = PSW_Spreadsheet.as_int
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 g_enum = {}
-g_rec_fields_by_name = {}
 g_rec_fields_by_order = []
+g_rec_fields_by_name  = {}
+g_rec_size_by_name    = {}    # 0 if message is dynamic size
 g_Coder    = ''
 g_Proto    = ''
 g_Aux_Dec  = ''
-g_Rec_Dec  = ''
+g_Msg_Dec  = ''
 g_Enum_Dec = ''
 g_Enum_Cnt = 1000
 g_Test_Funcs = ''
 g_Test_Calls = ''
+g_Test_Counter = 0
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -154,6 +156,7 @@ def Process_Block(block_start_row, block_cells):
                   'crc_16':        row['SPECIAL_CONTROL'] == 'CRC_16',
                   'crc_32':        row['SPECIAL_CONTROL'] == 'CRC_32',
                   'size_excludes': row['EXCLUDE_FROM_SIZE'] == 'TRUE',
+                  'fixed_size':    0,
         }
 
         count = str(row['COUNT_DEFINED_BY'])
@@ -162,6 +165,16 @@ def Process_Block(block_start_row, block_cells):
                 field['abs_count'] = as_int(count[1:])
             else:
                 field['rel_count'] = as_int(count)
+
+        # Treat 'CHARx' as shorthand for 'CHAR' plus COUNT_DEFINED_BY = '#x'.
+        # This simplifies a lot of subsequent handling.
+        if field['type'].startswith('CHAR'):
+             if field['type'] == 'CHAR':
+                 field['abs_count'] = 1  # Single char should be rare, but treat it as CHAR[1] for simplicity.
+                 field['type']      = 'CHAR'
+             else:
+                 field['abs_count'] = as_int(field['type'].replace('CHAR',''))
+                 field['type']      = 'CHAR'
 
         if row['INDEX'] == 0:
             Log_Debug('Processing new block Record Type <%s> Record Name <%s>' % (field['type'], field['fmt']))
@@ -174,9 +187,11 @@ def Process_Block(block_start_row, block_cells):
         rec_fields.append(field)
         field_index += 1
 
+    fixed, size = Compute_Fixed_Size(rec_name, rec_fields)
+    g_rec_size_by_name[rec_name] = size
+
     for field in rec_fields:
         if field['special'] in ('MSG_SIZE_16', 'MSG_SIZE_32'):
-            fixed, size = Compute_Fixed_Size(rec_name, rec_fields)
             if fixed and (field['value'] == ''):
                 field['value'] = str(size)
             elif fixed and (as_int(field['value']) != size):
@@ -195,12 +210,12 @@ def Process_Block(block_start_row, block_cells):
     else:
         return rec_name, rec_fields
 # ------------------------------------------------------------------------------
-def Get_Value_For_Defined_By(abs_count, rel_count, rec_fields):
+def Get_Value_For_Defined_By(abs_count, rel_count, rec_fields, field_parent):
     ''' Used for COUNT_DEFINED_BY to resolve absolute (#) versus relative references to the usable value. '''
     if abs_count > 0:
        return abs_count
     elif rel_count in range(1, len(rec_fields)):
-       return rec_fields[rel_count]['name']
+       return field_parent + rec_fields[rel_count]['name']
     # Parsing/range error.
     return None
 # ------------------------------------------------------------------------------
@@ -215,11 +230,6 @@ def Create_C_Struct(rec_name, rec_fields):
             ary = '[%d]' % field['abs_count']
         elif field['rel_count'] > 0:
             ptr = '*'
-        if field['type'].startswith('CHAR'):
-            field_type = 'CHAR'
-            fixed_size = field['type'].replace('CHAR', '')
-            if fixed_size != '':
-                ary = '[%s]' % fixed_size
 
         if field_type == 'STRUCT':
             body += '    %-20s%s %s%s;\n' % (field_fmt, ptr, field['name'], ary)
@@ -235,11 +245,11 @@ def Create_C_Struct(rec_name, rec_fields):
         else:
             body += '    %-20s%s %s%s;\n' % (field_type, ptr, field['name'], ary)
 
-    global g_Aux_Dec, g_Rec_Dec
+    global g_Aux_Dec, g_Msg_Dec
     if rec_fields[0]['type'] == 'Aux':
         g_Aux_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
     else:
-        g_Rec_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
+        g_Msg_Dec += 'typedef struct {\n' + body + '} ' + rec_name + ';\n'
 # ------------------------------------------------------------------------------
 def Compute_Fixed_Size(rec_name, rec_fields):
     type_sizes = {
@@ -259,8 +269,6 @@ def Compute_Fixed_Size(rec_name, rec_fields):
 
         if type_sizes.has_key(field['type']):
             bit_size += type_sizes[field['type']] * mult
-        elif field['type'].startswith('CHAR'):
-            bit_size += as_int(field['type'].replace('CHAR','')) * 8
         elif field['type'] == 'STRING':
             return False, 0
         elif field['type'] == 'STRUCT':
@@ -271,59 +279,6 @@ def Compute_Fixed_Size(rec_name, rec_fields):
                 else:
                     return False, 0
     return True, bit_size/8
-# ------------------------------------------------------------------------------
-def Create_C_Test_Function(rec_name, rec_fields):
-    # Skip rec_field[0] since it is the structure name field.
-    if rec_fields[0]['type'] == 'Aux':
-        return  # No test driver needed for Aux
-
-    fixed, size = Compute_Fixed_Size(rec_name, rec_fields)
-    field_num = 0
-    body = ''
-    for field in rec_fields[1:]:
-        field_type = field['type']
-        field_fmt  = field['fmt']
-        field_num += 1
-        #ptr, ary = '', ''
-        #if field['abs_count'] > 0:
-        #    ary = '[%d]' % field['abs_count']
-        #elif field['rel_count'] > 0:
-        #    ptr = '*'
-        #if field['type'].startswith('CHAR'):
-        #    field_type = 'CHAR'
-        #    fixed_size = field['type'].replace('CHAR', '')
-        #    if fixed_size != '':
-        #        ary = '[%s]' % fixed_size
-
-        if field_type == 'VARIANT_ARRAY':
-            return # TODO
-        elif field_type == 'VARIANT_LIST':
-            return # TODO
-        elif field_type == 'VARIANT_ITEM':
-            return # TODO
-        elif field_type == 'STRUCT':
-            return # TODO
-
-    global g_Test_Funcs, g_Test_Calls
-    msg_name = rec_fields[0]['format']
-    g_Test_Calls += '    if (test_%s() == 1) {pass++;} else {fail++;}\n' % msg_name
-
-    g_Test_Funcs += 'UINT16 test_%s()\n' % msg_name
-    g_Test_Funcs += '{\n'
-    g_Test_Funcs += '    UINT16 ok = 1;\n'
-    g_Test_Funcs += '    UINT16 out_offset = 0;\n'
-    g_Test_Funcs += '    UINT16 in_offset = 0;\n'
-    g_Test_Funcs += '    %s* net_msg = 0;\n' % msg_name
-    g_Test_Funcs += '    %s  out_msg = 0;\n' % msg_name
-    g_Test_Funcs += '    %s   in_msg = 0;\n' % msg_name
-    g_Test_Funcs += out_body
-    g_Test_Funcs += '    out_offset = Pack_%s(buffer, buffer_max, &out_msg);\n' % msg_name
-    g_Test_Funcs += '    net_msg    = (%s*) buffer;\n' % msg_name
-    g_Test_Funcs += '    in_offset  = Unpack_%s(buffer, buffer_max, &in_msg);\n' % msg_name
-    g_Test_Funcs += in_body
-    g_Test_Funcs += '    return ok;\n'
-    g_Test_Funcs += '}\n'
-
 # ------------------------------------------------------------------------------
 def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size=0):
     fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
@@ -399,11 +354,11 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
 
     for field in rec_fields[1:]:
         field_num       += 1
-        field_loop_max   = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields)
+        field_loop_max   = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields, field_parent)
         field_loop_index = '[f]' if field_loop_max else ''
         size_suffix      = Get_C_Struct_Coder_Size_Suffix(field['type'])
 
-        if field['abs_count'] > 0:   # Absolute count; max is an integer.
+        if field_loop_max:   # Absolute count; max is an integer.
             body += '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
 
         # Handle special conditions:
@@ -423,20 +378,21 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
 # TODO - This method only works well with CRC as last field.
 # TODO - A more general method would be a DBD-based EXCLUDE_FROM_CRC method that allows any initial/final fields to be omitted.
 # TODO - In this case, the loader should calculate field['crc_start_field'] and field['crc_end_field'] and the byte offsets would need to be determined last.
+# TODO - In fact, this implementation is bugged... to get size correct, must output a bogus CRC but then the CRC calculation is thrown off :(
                 msg_crc_field_num = field_num
-                continue # Do not output a CRC coder... it will be done last in the subsequent code block.
 
         elif dir_suffix == 'Unpack':
             alloc_type = field['fmt'] if field['type'] == 'STRUCT' else field['type']
 
             if field['abs_count'] > 0:
-                body += '%s%s = (%s*) Mem_Alloc(%d, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field['abs_count'], alloc_type)
-                body += '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
-
+#               if field['type'] == 'STRUCT' or field['type'] == 'STRING':
+#                   body += '%s%s[f] = (%s*) Mem_Alloc(%d, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field['abs_count'], alloc_type)
+                pass
             elif field_loop_max:         # Relative count; field_loop_max is a field name.
 # TODO The 'sizeof()' will not work if Aux STRUCT is dynamic sized
-                body += '%s%s = (%s*) Mem_Alloc(%s, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field_loop_max, alloc_type)
-                body += '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
+#               if field['type'] == 'STRUCT' or field['type'] == 'STRING':
+#                   body += '%s%s[f] = (%s*) Mem_Alloc(%d, sizeof(%s));\n' % (field_parent, field['name'], alloc_type, field['abs_count'], alloc_type)
+                pass
 
         elif field['type'] == 'STRING':
             # Pure null-terminated string.
@@ -451,10 +407,6 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
         elif field['type'] == 'CHAR':
             # User may select 'CHAR' to me 1 CHAR, or may combine it with the SIZE_DEFINED_BY cell.
             body  += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
-
-        elif field['type'].startswith('CHAR'):
-            fixed_size = as_int(field['type'].replace('CHAR', ''))
-            body      += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
 
         elif field['type'] == 'STRING':
             # Only allow STRING for null-terminated data with no fixed length.
@@ -494,9 +446,124 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
     else:
         return body
 # ------------------------------------------------------------------------------
-def Load_Recs_Spreadsheet(filename):
-    ''' Loads the indicated Recs spreadsheet file and enters data into internal globals. '''
-    Log_Info('Loading Recs Spreadsheet: ' + filename)
+# Test
+# ------------------------------------------------------------------------------
+def Create_Test_Out_Setter(field_parent, field_name, field_type, field_index=None):
+
+    # Truncate to fit in INT8 since this counter is just confidence boosting anyway.
+    global g_Test_Counter
+    g_Test_Counter = (g_Test_Counter + 1) % 127
+
+    if field_index == None:
+        str_index = ''
+    else:
+        str_index = '[%s]' % str(field_index)   # Allowed to use digit or index variable.
+
+    # TODO - use enum instead of int for enum fields...
+
+    if string.find(field_type, 'INT') != -1:
+        return '%s%s%s = %d;\n' % (field_parent, field_name, str_index, g_Test_Counter)
+    elif string.find(field_type, 'FLOAT') != -1:
+        return '%s%s%s = %d.%d;\n' % (field_parent, field_name, str_index, g_Test_Counter, g_Test_Counter)
+    elif field_type == 'CHAR':
+        if not chr(g_Test_Counter).isalnum(): g_Test_Counter = ord('A')
+        return '%s%s%s = \'%c\';\n' % (field_parent, field_name, str_index, g_Test_Counter)
+    elif field_type == 'STRING':
+        return '%s%s%s = strdup("s%d");\n' % (field_parent, field_name, str_index, g_Test_Counter)
+    return ''
+# ------------------------------------------------------------------------------
+def Create_Test_In_Getter(field_parent, field_name, field_type, field_index=None):
+    comp = ''
+    if field_index == None:
+        str_index = ''
+    else:
+        str_index = '[%s]' % str(field_index)   # Allowed to use digit or index variable.
+
+    # TODO - use enum instead of int for enum fields...
+
+    if string.find(field_type, 'INT') != -1:
+        comp = '%s%s%s == %d' % (field_parent, field_name, str_index, g_Test_Counter)
+    elif string.find(field_type, 'FLOAT') != -1:
+        comp = '%s%s%s == %d.%d' % (field_parent, field_name, str_index, g_Test_Counter, g_Test_Counter)
+    elif field_type == 'CHAR':
+        comp = '%s%s%s == \'%c\'' % (field_parent, field_name, str_index, g_Test_Counter)
+    elif field_type == 'STRING':
+        comp = '!strcmp(%s%s%s, "s%d")' % (field_parent, field_name, str_index, g_Test_Counter)
+
+    if comp == '': return ''
+    return 'if (%s) { printf("PASS: %s\\n"); } else { ok=0; printf("FAIL: %s\\n"); }\n' % (comp, field_name, field_name)
+# ------------------------------------------------------------------------------
+def Create_C_Test_Function(rec_name, rec_fields, out_field_parent='out_msg.', in_field_parent='in_msg.'):
+    # Skip rec_field[0] since it is the structure name field.
+    if rec_fields[0]['type'] == 'Aux':
+        return  # No test driver needed for Aux
+
+    global g_Test_Counter
+
+    field_num = 0
+    out_body = ''
+    in_body = ''
+    for field in rec_fields[1:]:
+        field_type = field['type']
+        field_fmt  = field['fmt']
+        field_num += 1
+
+        if field_type == 'VARIANT_ARRAY':
+            return # TODO
+        elif field_type == 'VARIANT_LIST':
+            return # TODO
+        elif field_type == 'VARIANT_ITEM':
+            return # TODO
+        elif field_type == 'STRUCT':
+            return # TODO
+        elif not field['value']:
+            out_field_loop_max = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields, out_field_parent)
+            in_field_loop_max = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields, in_field_parent)
+            if field['abs_count'] > 0:
+                for i in range(field['abs_count']):
+                    out_body += Create_Test_Out_Setter(out_field_parent, field['name'], field_type, i)
+                    in_body  += Create_Test_In_Getter(in_field_parent, field['name'], field_type, i)
+            elif not out_field_loop_max:
+                out_body += Create_Test_Out_Setter(out_field_parent, field['name'], field_type)
+                in_body  += Create_Test_In_Getter(in_field_parent, field['name'], field_type)
+            else:
+                out_body += '{ UINT16 f; for (f = 0; f < %s; f++) {\n' % out_field_loop_max
+                out_body += Create_Test_Out_Setter(out_field_parent, field['name'], field_type, 'f')
+                out_body += '}}\n'
+                in_body  += '{ UINT16 f; for (f = 0; f < %s; f++) {\n' % in_field_loop_max
+                in_body  += Create_Test_In_Getter(in_field_parent, field['name'], field_type, 'f')
+                in_body  += '}}\n'
+
+    global g_Test_Funcs, g_Test_Calls
+    if out_field_parent == 'out_msg.':
+        in1 = '    '
+        msg_name = rec_fields[0]['fmt']
+        g_Test_Calls += Indent(in1, 'if (test_%s() == 1) {pass++;} else {fail++;}\n' % msg_name)
+
+        g_Test_Funcs += 'UINT16 test_%s()\n' % msg_name
+        g_Test_Funcs += '{\n'
+        g_Test_Funcs += Indent(in1, 'UINT16 ok = 1;\n')
+        g_Test_Funcs += Indent(in1, 'UINT16 out_offset = 0;\n')
+        g_Test_Funcs += Indent(in1, 'UINT16 in_offset = 0;\n')
+        g_Test_Funcs += Indent(in1, '%s* net_msg = 0;\n' % msg_name)
+        g_Test_Funcs += Indent(in1, '%s  out_msg;\n' % msg_name)
+        g_Test_Funcs += Indent(in1, '%s   in_msg;\n' % msg_name)
+        g_Test_Funcs += Indent(in1, 'printf("----- %s\\n");\n' % rec_name)
+        g_Test_Funcs += Indent(in1, out_body)
+        g_Test_Funcs += Indent(in1, 'out_offset = Pack_%s(buffer, buffer_max, &out_msg);\n' % msg_name)
+        g_Test_Funcs += Indent(in1, 'net_msg    = (%s*) buffer;\n' % msg_name)
+        g_Test_Funcs += Indent(in1, 'in_offset  = Unpack_%s(buffer, buffer_max, &in_msg);\n' % msg_name)
+        g_Test_Funcs += Indent(in1, in_body)
+        g_Test_Funcs += Indent(in1, 'return ok;\n')
+        g_Test_Funcs += '}\n'
+    else:
+        return out_body, in_body
+# ------------------------------------------------------------------------------
+# Load
+# ------------------------------------------------------------------------------
+def Load_Messages_Spreadsheet(filename):
+    ''' Loads the indicated Messages spreadsheet file and enters data into internal globals. '''
+    Log_Info('Loading Messages Spreadsheet: ' + filename)
 
     hdr_row_num = 1
     hdr_name_dict = {
@@ -530,11 +597,26 @@ def Load_Recs_Spreadsheet(filename):
         Create_C_Struct(rec_name, rec_fields)
         Create_C_Struct_Coder('Pack',   rec_name, rec_fields)
         Create_C_Struct_Coder('Unpack', rec_name, rec_fields)
+        Create_C_Test_Function(rec_name, rec_fields)
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # Enum Processing
 # ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+def Create_Enums():
+    global g_Enum_Dec
+    in1 = '    '
+    in2 = in1 + in1
+    for enum_type in g_enum:
+        if enum_type == '': continue   # Ignore generic default enum
+        body = ''
+        for enum in g_enum[enum_type]:
+            body += in1 + '%-30s = %s,\n' % (enum[1], enum[0])
+        body += in1 + enum_type + '_MAX\n'
+        g_Enum_Dec += 'typedef enum {\n%s} %s;\n' % (body, enum_type)
+# ------------------------------------------------------------------------------
+# Load
 # ------------------------------------------------------------------------------
 def Load_Enums_Spreadsheet(filename):
     ''' Loads the indicated Enums spreadsheet file and enters data into internal globals. '''
@@ -579,18 +661,7 @@ def Load_Enums_Spreadsheet(filename):
             # TODO Validate that the enum names are unique within this type (or possibly within whole file!)
             # TODO Note that C allows for more than 1 enum name to be assigned to a given int value.
             g_enum[curr_enum].append([int(value), Make_Valid_C_Enum(row['ENUM_B'])])
-# ------------------------------------------------------------------------------
-def Create_Enums():
-    global g_Enum_Dec
-    in1 = '    '
-    in2 = in1 + in1
-    for enum_type in g_enum:
-        if enum_type == '': continue   # Ignore generic default enum
-        body = ''
-        for enum in g_enum[enum_type]:
-            body += in1 + '%-30s = %s,\n' % (enum[1], enum[0])
-        body += in1 + enum_type + '_MAX\n'
-        g_Enum_Dec += 'typedef enum {\n%s} %s;\n' % (body, enum_type)
+    Create_Enums()
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # MAIN
@@ -600,10 +671,9 @@ if __name__=='__main__':
 
     filename = 'KC-390_DBD_Enums.xlsx'
     Load_Enums_Spreadsheet(filename)
-    Create_Enums()
 
     filename = 'KC-390_DBD_Messages.xlsx'
-    Load_Recs_Spreadsheet(filename)
+    Load_Messages_Spreadsheet(filename)
 
     h_text  = '#ifndef INCLUDED_Gen_Structs_h\n'
     h_text += '#define INCLUDED_Gen_Structs_h\n'
@@ -612,8 +682,8 @@ if __name__=='__main__':
     h_text += g_Enum_Dec
     h_text += '/* -- Aux Structs -- */\n'
     h_text += g_Aux_Dec
-    h_text += '/* -- Rec Structs -- */\n'
-    h_text += g_Rec_Dec
+    h_text += '/* -- Msg Structs -- */\n'
+    h_text += g_Msg_Dec
     h_text += '/* -- Prototypes -- */\n'
     h_text += g_Proto
     h_text += '#endif /* INCLUDED_Gen_Structs_h */\n'
@@ -634,21 +704,21 @@ if __name__=='__main__':
     c_file.close()
 
     t_text  = '#include <stdio.h>\n'
-    t_text += '#include "locker_core.h"\n'
+    t_text += '#include "locker_auto.h"\n\n'
     t_text += 'BYTE   buffer[1024];\n'
-    t_text += 'UINT16 buffer_max = (UINT16) sizeof(buffer);\n'
+    t_text += 'UINT16 buffer_max = (UINT16) sizeof(buffer);\n\n'
     t_text += g_Test_Funcs
     t_text += 'int main(int argc, char** argv)\n'
     t_text += '{\n'
     t_text += '    UINT16 pass = 0;\n'
     t_text += '    UINT16 fail = 0;\n'
     t_text += g_Test_Calls
-    t_text += '    printf("* Final pass=<%d> fail=<%d>\n", pass, fail);\n'
+    t_text += '    printf("* Final pass=<%d> fail=<%d>\\n", pass, fail);\n'
     t_text += '    return 0;\n'
     t_text += '}\n'
 
-    auto_gen_test_c = auto_gen_basename + '_test.c'
-    #print 'Creating %s ...' % auto_gen_test_c
-    #t_file = open(auto_gen_test_c, 'w')
-    #t_file.write(t_text)
-    #t_file.close()
+    ## auto_gen_test_c = auto_gen_basename + '_test.c'
+    ## print 'Creating %s ...' % auto_gen_test_c
+    ## t_file = open(auto_gen_test_c, 'w')
+    ## t_file.write(t_text)
+    ## t_file.close()

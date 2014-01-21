@@ -14,6 +14,7 @@ UINT16 Pack_T_Acknowledge_Message(BYTE buffer[], const UINT16 buffer_max, T_Ackn
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ACK_NAK));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->NAK_Reason));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -48,6 +49,7 @@ UINT16 Pack_T_Ping_Message(BYTE buffer[], const UINT16 buffer_max, T_Ping_Messag
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -80,6 +82,7 @@ UINT16 Pack_T_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT_
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -113,11 +116,16 @@ UINT16 Pack_T_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Boot_Loader_Active));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->BIT_Status));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -134,9 +142,13 @@ UINT16 Unpack_T_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T_B
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Boot_Loader_Active));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->BIT_Status));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -167,6 +179,7 @@ UINT16 Pack_T_Control_Panel_State_Request_Message(BYTE buffer[], const UINT16 bu
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->DIM_BRIGHT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->NVG_MODE));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -223,6 +236,7 @@ UINT16 Pack_T_Control_Panel_State_Response_Message(BYTE buffer[], const UINT16 b
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->DIM_BRIGHT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->NVG_MODE));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -268,6 +282,7 @@ UINT16 Pack_T_Control_Panel_BIT_Request_Message(BYTE buffer[], const UINT16 buff
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -303,11 +318,16 @@ UINT16 Pack_T_Control_Panel_BIT_Response_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Power_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Communications_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -326,9 +346,13 @@ UINT16 Unpack_T_Control_Panel_BIT_Response_Message(BYTE buffer[], const UINT16 b
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Power_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Communications_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -348,6 +372,7 @@ UINT16 Pack_T_Display_Configuration_Command_Message(BYTE buffer[], const UINT16 
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -381,11 +406,13 @@ UINT16 Pack_T_Set_LCAS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->First_LCAS_Message));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Selected_LCAS_Message));
+        { int f; for(f = 0; f < data->LCAS_Message_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].LCAS_Message_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].Acknowledged));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].SPARE));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -405,7 +432,6 @@ UINT16 Unpack_T_Set_LCAS_Command_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->First_LCAS_Message));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Selected_LCAS_Message));
-        data->LCAS_Message_Data = (T_LCAS_Message_Data*) Mem_Alloc(LCAS_Message_Count, sizeof(T_LCAS_Message_Data));
         { int f; for(f = 0; f < data->LCAS_Message_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].LCAS_Message_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].Acknowledged));
@@ -450,6 +476,7 @@ UINT16 Pack_T_Set_SPDU_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Light));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -481,11 +508,15 @@ UINT16 Pack_T_Set_Event_Text_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title), 16);
+        { int f; for(f = 0; f < 16; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title[f]), 16);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Lines));
+        { int f; for(f = 0; f < 24; f++) {
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line[f]), 24);
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -502,10 +533,11 @@ UINT16 Unpack_T_Set_Event_Text_Command_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title), 16);
+        { int f; for(f = 0; f < 16; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title[f]), 16);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Lines));
-        data->Line = (CHAR24*) Mem_Alloc(Number_of_Lines, sizeof(CHAR24));
-        { int f; for(f = 0; f < data->Number_of_Lines; f++) {
+        { int f; for(f = 0; f < 24; f++) {
         byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line[f]), 24);
         }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -527,6 +559,7 @@ UINT16 Pack_T_Set_Main_Selection_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Area));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -562,14 +595,17 @@ UINT16 Pack_T_Update_Window_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Visible));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Highlighted_Field));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Update_Count));
+        { int f; for(f = 0; f < data->Field_Update_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Field_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Enabled));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Field_Value));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Display_State));
+        { int f; for(f = 0; f < data->Field_Data[f].Field_Value; f++) {
         byte_offset = Pack_Endian_Sz(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Text[f]));
         }}
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -590,13 +626,11 @@ UINT16 Unpack_T_Update_Window_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Visible));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Highlighted_Field));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Update_Count));
-        data->Field_Data = (T_Field_Data*) Mem_Alloc(Field_Update_Count, sizeof(T_Field_Data));
         { int f; for(f = 0; f < data->Field_Update_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Field_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Enabled));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Field_Value));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Display_State));
-        data->Field_Data[f].Text = (STRING*) Mem_Alloc(Field_Value, sizeof(STRING));
         { int f; for(f = 0; f < data->Field_Data[f].Field_Value; f++) {
         byte_offset = Unpack_Endian_Sz(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Data[f].Text[f]));
         }}
@@ -614,6 +648,7 @@ UINT16 Pack_T_Field_Data(BYTE buffer[], const UINT16 buffer_max, T_Field_Data* d
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Enabled));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Value));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_State));
+        { int f; for(f = 0; f < data->Field_Value; f++) {
         byte_offset = Pack_Endian_Sz(buffer, buffer_max, byte_offset, (BYTE*)&(data->Text[f]));
         }}
     }
@@ -627,7 +662,6 @@ UINT16 Unpack_T_Field_Data(BYTE buffer[], const UINT16 buffer_max, T_Field_Data*
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Enabled));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Field_Value));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_State));
-        data->Text = (STRING*) Mem_Alloc(Field_Value, sizeof(STRING));
         { int f; for(f = 0; f < data->Field_Value; f++) {
         byte_offset = Unpack_Endian_Sz(buffer, buffer_max, byte_offset, (BYTE*)&(data->Text[f]));
         }}
@@ -646,13 +680,22 @@ UINT16 Pack_T_Show_Dialog_Command_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         data->Word_Count = (UINT16) 122;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title), 26);
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_1), 26);
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_2), 26);
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_3), 26);
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_1[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_2[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_3[f]), 26);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Type));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Background_Color));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -667,10 +710,18 @@ UINT16 Unpack_T_Show_Dialog_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Source_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title), 26);
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_1), 26);
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_2), 26);
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_3), 26);
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Title[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_1[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_2[f]), 26);
+        }}
+        { int f; for(f = 0; f < 26; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line_3[f]), 26);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Type));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Background_Color));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
@@ -692,6 +743,7 @@ UINT16 Pack_T_Set_Mode_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mode));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -724,6 +776,7 @@ UINT16 Pack_T_Add_Pallet_Command_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Pallets));
+        { int f; for(f = 0; f < data->Number_of_Pallets; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Pallet_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Weight));
@@ -733,6 +786,7 @@ UINT16 Pack_T_Add_Pallet_Command_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Detent_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -750,7 +804,6 @@ UINT16 Unpack_T_Add_Pallet_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Pallets));
-        data->Pallet_Data = (T_Pallet_Data*) Mem_Alloc(Number_of_Pallets, sizeof(T_Pallet_Data));
         { int f; for(f = 0; f < data->Number_of_Pallets; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Pallet_Number));
@@ -805,6 +858,7 @@ UINT16 Pack_T_Add_Platform_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Platforms));
+        { int f; for(f = 0; f < data->Number_of_Platforms; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Platform_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Weight));
@@ -814,6 +868,7 @@ UINT16 Pack_T_Add_Platform_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Detent_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -831,7 +886,6 @@ UINT16 Unpack_T_Add_Platform_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Platforms));
-        data->Platform_Data = (T_Platform_Data*) Mem_Alloc(Number_of_Platforms, sizeof(T_Platform_Data));
         { int f; for(f = 0; f < data->Number_of_Platforms; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Platform_Number));
@@ -886,6 +940,7 @@ UINT16 Pack_T_Add_CDS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Bundles));
+        { int f; for(f = 0; f < data->Number_of_Bundles; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].CDS_Bundle_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].Side));
@@ -896,6 +951,7 @@ UINT16 Pack_T_Add_CDS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].Frame_Position_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -913,7 +969,6 @@ UINT16 Unpack_T_Add_CDS_Command_Message(BYTE buffer[], const UINT16 buffer_max, 
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Bundles));
-        data->Bundle_Data = (T_Bundle_Data*) Mem_Alloc(Number_of_Bundles, sizeof(T_Bundle_Data));
         { int f; for(f = 0; f < data->Number_of_Bundles; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].CDS_Bundle_Number));
@@ -971,23 +1026,32 @@ UINT16 Pack_T_Add_Logistics_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Logistic_Items));
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Item_Number[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Size[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Weight[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Height[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Frame_Position[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Offset[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1005,35 +1069,27 @@ UINT16 Unpack_T_Add_Logistics_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Logistic_Items));
-        data->Cargo_ID = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID[f]));
         }}
-        data->Logistic_Item_Number = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Item_Number[f]));
         }}
-        data->Side = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
-        data->Size = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Size[f]));
         }}
-        data->Weight = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Weight[f]));
         }}
-        data->Height = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Height[f]));
         }}
-        data->Frame_Position = (UINT16*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Frame_Position[f]));
         }}
-        data->Offset = (UINT8*) Mem_Alloc(Number_of_Logistic_Items, sizeof(UINT8));
         { int f; for(f = 0; f < data->Number_of_Logistic_Items; f++) {
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Offset[f]));
         }}
@@ -1054,9 +1110,11 @@ UINT16 Pack_T_Delete_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
+        { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1074,7 +1132,6 @@ UINT16 Unpack_T_Delete_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
-        data->Cargo_ID = (UINT16*) Mem_Alloc(Number_of_Cargo_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID[f]));
         }}
@@ -1098,6 +1155,7 @@ UINT16 Pack_T_Add_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Forward_Lock_Position));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1133,6 +1191,7 @@ UINT16 Pack_T_Delete_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1165,13 +1224,17 @@ UINT16 Pack_T_Set_Lock_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Locks));
+        { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1189,15 +1252,12 @@ UINT16 Unpack_T_Set_Lock_Icons_Command_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Locks));
-        data->Position = (UINT16*) Mem_Alloc(Number_of_Locks, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position[f]));
         }}
-        data->Side = (UINT16*) Mem_Alloc(Number_of_Locks, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
-        data->Icon = (UINT16*) Mem_Alloc(Number_of_Locks, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Locks; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
@@ -1218,13 +1278,17 @@ UINT16 Pack_T_Set_CRG_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_CRGs));
+        { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
+        { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1242,15 +1306,12 @@ UINT16 Unpack_T_Set_CRG_Icons_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_CRGs));
-        data->Position = (UINT16*) Mem_Alloc(Number_of_CRGs, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position[f]));
         }}
-        data->Side = (UINT16*) Mem_Alloc(Number_of_CRGs, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Side[f]));
         }}
-        data->Icon = (UINT16*) Mem_Alloc(Number_of_CRGs, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_CRGs; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
@@ -1274,6 +1335,7 @@ UINT16 Pack_T_Set_PDM_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Left_PDM_Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Right_PDM_Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1309,6 +1371,7 @@ UINT16 Pack_T_Set_Towplate_Icon_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1343,6 +1406,7 @@ UINT16 Pack_T_Highlight_Button_Command_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1375,10 +1439,12 @@ UINT16 Pack_T_Highlight_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
+        { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Highlight_Data[f].Cargo_Number));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Highlight_Data[f].Highlight));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1396,7 +1462,6 @@ UINT16 Unpack_T_Highlight_Cargo_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
-        data->Cargo_Highlight_Data = (T_Highlight_Cargo_Data*) Mem_Alloc(Number_of_Cargo_Items, sizeof(T_Highlight_Cargo_Data));
         { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Highlight_Data[f].Cargo_Number));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Highlight_Data[f].Highlight));
@@ -1436,10 +1501,12 @@ UINT16 Pack_T_Highlight_Event_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Events));
+        { int f; for(f = 0; f < data->Number_of_Events; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Highlight_Data[f].Event_Number));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Highlight_Data[f].Highlight));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1457,7 +1524,6 @@ UINT16 Unpack_T_Highlight_Event_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Events));
-        data->Event_Highlight_Data = (T_Highlight_Event_Data*) Mem_Alloc(Number_of_Events, sizeof(T_Highlight_Event_Data));
         { int f; for(f = 0; f < data->Number_of_Events; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Highlight_Data[f].Event_Number));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Highlight_Data[f].Highlight));
@@ -1498,12 +1564,16 @@ UINT16 Pack_T_Add_Event_Command_Message(BYTE buffer[], const UINT16 buffer_max, 
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Number));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Name), 10);
+        { int f; for(f = 0; f < 10; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Name[f]), 10);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Color));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
+        { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Number[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1522,10 +1592,11 @@ UINT16 Unpack_T_Add_Event_Command_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Number));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Name), 10);
+        { int f; for(f = 0; f < 10; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Name[f]), 10);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Color));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Cargo_Items));
-        data->Cargo_Number = (UINT16*) Mem_Alloc(Number_of_Cargo_Items, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Cargo_Items; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Number[f]));
         }}
@@ -1546,9 +1617,11 @@ UINT16 Pack_T_Delete_Event_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Events));
+        { int f; for(f = 0; f < data->Number_of_Events; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Number[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -1566,7 +1639,6 @@ UINT16 Unpack_T_Delete_Event_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Number_of_Events));
-        data->Event_Number = (UINT16*) Mem_Alloc(Number_of_Events, sizeof(UINT16));
         { int f; for(f = 0; f < data->Number_of_Events; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Number[f]));
         }}
@@ -1593,6 +1665,7 @@ UINT16 Pack_T_Control_Panel_Button_Press_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Release_Button));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Button));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1634,6 +1707,7 @@ UINT16 Pack_T_CHC_Display_BIT_Request_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_Check));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_Color));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1675,19 +1749,28 @@ UINT16 Pack_T_CHC_Display_BIT_Response_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CP_Interface));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CHC_Maintenance_Interface));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Reset_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Control_Panel_DC_Point_of__Load_Power_BIT_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CHC_Display_Interface));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Reset_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Boot_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1708,17 +1791,25 @@ UINT16 Unpack_T_CHC_Display_BIT_Response_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CP_Interface));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CHC_Maintenance_Interface));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Reset_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHC_D_Hardware_Part_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Control_Panel_DC_Point_of__Load_Power_BIT_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___CHC_Display_Interface));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Reset_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Boot_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
@@ -1745,6 +1836,7 @@ UINT16 Pack_T_System_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->WOW));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADS_OK));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1816,6 +1908,7 @@ UINT16 Pack_T_Lock_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Lock_Right_15));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Lock_Right_16));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1901,6 +1994,7 @@ UINT16 Pack_T_Device_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Link_LOCK_Status));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Status));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -1981,6 +2075,7 @@ UINT16 Pack_T_LRU_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Right_7_Fault_Ramp));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Right_8_Fault_Ramp));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2075,6 +2170,7 @@ UINT16 Pack_T_Commands_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, 
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mission_Computer_YELLOW));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mission_Computer_GREEN));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2141,12 +2237,14 @@ UINT16 Pack_T_Event_Data_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Count));
+        { int f; for(f = 0; f < data->Event_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Data[f].Event_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Data[f].Event_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Data[f].Event_Varaiant.Event_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Event_Typed_Data>
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -2164,7 +2262,6 @@ UINT16 Unpack_T_Event_Data_Periodic_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Count));
-        data->Event_Data = (T_Event_Data*) Mem_Alloc(Event_Count, sizeof(T_Event_Data));
         { int f; for(f = 0; f < data->Event_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Data[f].Event_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Data[f].Event_Number));
@@ -2280,6 +2377,7 @@ UINT16 Pack_T_CDS_Event(BYTE buffer[], const UINT16 buffer_max, T_CDS_Event* dat
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_2));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sequential_CRG_1));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Bundle_Count));
+        { int f; for(f = 0; f < data->CDS_Bundle_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Bundle_ID[f]));
         }}
     }
@@ -2293,7 +2391,6 @@ UINT16 Unpack_T_CDS_Event(BYTE buffer[], const UINT16 buffer_max, T_CDS_Event* d
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_2));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Sequential_CRG_1));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Bundle_Count));
-        data->CDS_Bundle_ID = (UINT16*) Mem_Alloc(CDS_Bundle_Count, sizeof(UINT16));
         { int f; for(f = 0; f < data->CDS_Bundle_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Bundle_ID[f]));
         }}
@@ -2305,6 +2402,7 @@ UINT16 Pack_T_Combat_Offload_Event(BYTE buffer[], const UINT16 buffer_max, T_Com
     UINT16 byte_offset = 0;
     if (data != 0) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Count));
+        { int f; for(f = 0; f < data->Platform_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_ID[f]));
         }}
     }
@@ -2315,7 +2413,6 @@ UINT16 Unpack_T_Combat_Offload_Event(BYTE buffer[], const UINT16 buffer_max, T_C
     UINT16 byte_offset = 0;
     if (data != 0) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Count));
-        data->Platform_ID = (UINT16*) Mem_Alloc(Platform_Count, sizeof(UINT16));
         { int f; for(f = 0; f < data->Platform_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_ID[f]));
         }}
@@ -2339,6 +2436,7 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Buffer_Stop));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Buffer_Stop_Forward_Lock_Pair));
+        { int f; for(f = 0; f < data->Pallet_Platform_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Pallet_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Pallet_Type));
@@ -2347,6 +2445,7 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Weight));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Height));
         }}
+        { int f; for(f = 0; f < data->CDS_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Cargo_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Position));
@@ -2357,6 +2456,7 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Recovery_Chute));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Static_Line_Length));
         }}
+        { int f; for(f = 0; f < data->Logistic_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Cargo_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Position));
@@ -2366,6 +2466,7 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Side));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -2388,7 +2489,6 @@ UINT16 Unpack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Count));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Buffer_Stop));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Buffer_Stop_Forward_Lock_Pair));
-        data->Pallet_Platform_Data = (T_Pallet_Platform_Data_Fields*) Mem_Alloc(Pallet_Platform_Count, sizeof(T_Pallet_Platform_Data_Fields));
         { int f; for(f = 0; f < data->Pallet_Platform_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Pallet_Number));
@@ -2398,7 +2498,6 @@ UINT16 Unpack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Weight));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Platform_Data[f].Height));
         }}
-        data->CDS_Data = (T_CDS_Data_Fields*) Mem_Alloc(CDS_Count, sizeof(T_CDS_Data_Fields));
         { int f; for(f = 0; f < data->CDS_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Cargo_Number));
@@ -2410,7 +2509,6 @@ UINT16 Unpack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Recovery_Chute));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CDS_Data[f].Static_Line_Length));
         }}
-        data->Logistic_Data = (T_Logistic_Data_Fields*) Mem_Alloc(Logistic_Count, sizeof(T_Logistic_Data_Fields));
         { int f; for(f = 0; f < data->Logistic_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Cargo_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Cargo_Number));
@@ -2527,10 +2625,12 @@ UINT16 Pack_T_Release_Force_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Sequence));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Expected_Force));
+        { int f; for(f = 0; f < data->Lock_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Force_Data[f].Lock_1));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Force_Data[f].Lock_1_Actual_Force));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -2550,7 +2650,6 @@ UINT16 Unpack_T_Release_Force_Periodic_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Sequence));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Expected_Force));
-        data->Lock_Force_Data = (T_Lock_Force_Data*) Mem_Alloc(Lock_Count, sizeof(T_Lock_Force_Data));
         { int f; for(f = 0; f < data->Lock_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Force_Data[f].Lock_1));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Force_Data[f].Lock_1_Actual_Force));
@@ -2594,6 +2693,7 @@ UINT16 Pack_T_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Side));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2630,6 +2730,7 @@ UINT16 Pack_T_Set_PDM_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->PDM));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2667,6 +2768,7 @@ UINT16 Pack_T_Set_Towplate_State_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Jettison));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Jettison));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2705,6 +2807,7 @@ UINT16 Pack_T_Set_CRG_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Operation));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2748,6 +2851,7 @@ UINT16 Pack_T_Monitor_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Actuator_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -2799,11 +2903,16 @@ UINT16 Pack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___LCU_Left_Interface));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___LCU_Right_Interface));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Count));
+        { int f; for(f = 0; f < data->LCU_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Side));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Overall_LCU_BIT_Passed));
@@ -2811,9 +2920,13 @@ UINT16 Pack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Communications_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_DC_Point_of_Load_Power_BIT_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Reset_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Overall_Lock_BIT_Fail));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Serial_Switch_Status_BIT_Fault_Actuator));
@@ -2825,6 +2938,7 @@ UINT16 Pack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Ultra_Capacitor_BIT_Fault));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -2853,12 +2967,15 @@ UINT16 Unpack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___LCU_Left_Interface));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->COM_Fault___LCU_Right_Interface));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Count));
-        data->LCU_Bit_Data = (T_LCU_Bit_Data*) Mem_Alloc(LCU_Count, sizeof(T_LCU_Bit_Data));
         { int f; for(f = 0; f < data->LCU_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Number));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Side));
@@ -2867,9 +2984,13 @@ UINT16 Unpack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Communications_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_DC_Point_of_Load_Power_BIT_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Reset_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Hardware_Part_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].Overall_Lock_BIT_Fail));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Serial_Switch_Status_BIT_Fault_Actuator));
@@ -2896,9 +3017,13 @@ UINT16 Pack_T_LCU_Bit_Data(BYTE buffer[], const UINT16 buffer_max, T_LCU_Bit_Dat
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Communications_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_DC_Point_of_Load_Power_BIT_Fault));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_ID));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_Lock_BIT_Fail));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Serial_Switch_Status_BIT_Fault_Actuator));
@@ -2922,9 +3047,13 @@ UINT16 Unpack_T_LCU_Bit_Data(BYTE buffer[], const UINT16 buffer_max, T_LCU_Bit_D
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Communications_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_DC_Point_of_Load_Power_BIT_Fault));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Fault));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Hardware_Part_ID));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Overall_Lock_BIT_Fail));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Serial_Switch_Status_BIT_Fault_Actuator));
@@ -2965,6 +3094,7 @@ UINT16 Pack_T_Command_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADP_GREEN_Button));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADP_Drogue_Jettison_Button));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3060,6 +3190,7 @@ UINT16 Pack_T_Monitor_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Status_Data[f].Next_Lock_State));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3101,8 +3232,6 @@ UINT16 Unpack_T_Monitor_Status_Periodic_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Actuator_Extended));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Actuator_Retracted));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CRG_Present));
-        { int f; for(f = 0; f < 32; f++) {
-        data->Lock_Status_Data = (T_Lock_Status_Data*) Mem_Alloc(32, sizeof(T_Lock_Status_Data));
         { int f; for(f = 0; f < 32; f++) {
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Status_Data[f].Lock_BIT_Passed));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Status_Data[f].Actuator_Power_Enable));
@@ -3196,6 +3325,7 @@ UINT16 Pack_T_Mission_Parameter_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Variant.Event_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Event_Data>
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3422,6 +3552,7 @@ UINT16 Pack_T_LCU_Status_Request_Message(BYTE buffer[], const UINT16 buffer_max,
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3454,11 +3585,13 @@ UINT16 Pack_T_LCU_Status_Response_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->BIT_Passed));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Count));
+        { int f; for(f = 0; f < data->Lock_Sensor_Count; f++) {
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Lock_Busy));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Lock_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Next_Lock_State));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -3477,7 +3610,6 @@ UINT16 Unpack_T_LCU_Status_Response_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->BIT_Passed));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Count));
-        data->Lock_Sensor_Data = (T_Lock_Sensor_Data*) Mem_Alloc(Lock_Sensor_Count, sizeof(T_Lock_Sensor_Data));
         { int f; for(f = 0; f < data->Lock_Sensor_Count; f++) {
         byte_offset = Unpack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Lock_Busy));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Lock_State));
@@ -3529,6 +3661,7 @@ UINT16 Pack_T_LCU_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3587,6 +3720,7 @@ UINT16 Pack_T_LCU_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Actuator_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3653,6 +3787,7 @@ UINT16 Pack_T_LCU_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_15_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_16_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3701,6 +3836,7 @@ UINT16 Pack_T_LCU_Force_Request_Message(BYTE buffer[], const UINT16 buffer_max, 
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3735,6 +3871,7 @@ UINT16 Pack_T_LCU_Force_Response_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Dog_Displacement_Force_Sensor));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Dog_Displacement_Force_Sensor));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3811,6 +3948,7 @@ UINT16 Pack_T_SOFTWARE_FIELD_LOAD_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Subformat_Data.Subformat_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Subformat_Data>
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3868,9 +4006,13 @@ UINT16 Pack_T_Field_Load_Response(BYTE buffer[], const UINT16 buffer_max, T_Fiel
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3879,9 +4021,13 @@ UINT16 Unpack_T_Field_Load_Response(BYTE buffer[], const UINT16 buffer_max, T_Fi
 {
     UINT16 byte_offset = 0;
     if (data != 0) {
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Software_Part_ID));
-        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
+        { int f; for(f = 0; f < 20; f++) {
+        byte_offset = Unpack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number[f]), 20);
+        }}
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3893,6 +4039,7 @@ UINT16 Pack_T_Field_Load_Data(BYTE buffer[], const UINT16 buffer_max, T_Field_Lo
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Total_Data_Blocks));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Current_Data_Block));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Data_Word_Count));
+        { int f; for(f = 0; f < data->Data_Word_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Data_Words[f]));
         }}
     }
@@ -3905,7 +4052,6 @@ UINT16 Unpack_T_Field_Load_Data(BYTE buffer[], const UINT16 buffer_max, T_Field_
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Total_Data_Blocks));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Current_Data_Block));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Data_Word_Count));
-        data->Data_Words = (UINT16*) Mem_Alloc(Data_Word_Count, sizeof(UINT16));
         { int f; for(f = 0; f < data->Data_Word_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Data_Words[f]));
         }}
@@ -3959,6 +4105,7 @@ UINT16 Pack_T_Maintenance_Data_Request_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Rx_ARINC_Data));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHADS_Message_Data));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
@@ -3994,10 +4141,12 @@ UINT16 Pack_T_Maintenance_Data_ARINC_Periodic_Message(BYTE buffer[], const UINT1
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_Count));
+        { int f; for(f = 0; f < data->ARINC_Message_Count; f++) {
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_32_Bit_Data[f].Word_1));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_32_Bit_Data[f].Word_2));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
         data->Word_Count = (UINT16) byte_offset;
         (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
@@ -4015,7 +4164,6 @@ UINT16 Unpack_T_Maintenance_Data_ARINC_Periodic_Message(BYTE buffer[], const UIN
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Dest_ID));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_Count));
-        data->ARINC_Message_32_Bit_Data = (T_Bit_32_Data*) Mem_Alloc(ARINC_Message_Count, sizeof(T_Bit_32_Data));
         { int f; for(f = 0; f < data->ARINC_Message_Count; f++) {
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_32_Bit_Data[f].Word_1));
         byte_offset = Unpack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_32_Bit_Data[f].Word_2));

@@ -773,7 +773,7 @@ typedef struct {
     T_Bit_64_Data        File_CRC_64;
     T_Bit_64_Data        Calculated_CRC_64;
 } T_Field_Load_Complete_Response;
-/* -- Rec Structs -- */
+/* -- Msg Structs -- */
 typedef struct {
     UINT16               Sync;
     UINT16               Message_ID;
@@ -926,7 +926,7 @@ typedef struct {
     UINT16               Word_Count;
     CHAR                 Title[16];
     UINT16               Number_of_Lines;
-    CHAR                * Line[24];
+    CHAR                 Line[24];
     UINT16               Packet_ID_Seq;
     UINT16               Header_CR;
 } T_Set_Event_Text_Command_Message;
