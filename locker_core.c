@@ -13,7 +13,7 @@
 /* ---------------------------------------------------------------------------- */
 #define CRC16_POLY 0x8408
 
-UINT16 Calculate_CRC16(BYTE* data_p, UINT16 length)
+UINT16 Calculate_CRC16(BYTE* data_p, UINT16 num_bytes)
 {
     /*
                                             16   12   5
@@ -27,11 +27,11 @@ UINT16 Calculate_CRC16(BYTE* data_p, UINT16 length)
     UINT32 data;
     UINT32 crc = 0xffff;
 
-    if (length == 0) {
+    if (num_bytes == 0) {
         return (~crc);
     }
 
-    do {
+    for ( ; num_bytes > 0; num_bytes--) {
         data = (UINT32) *data_p; 
         data_p++;
         for (i = 0; i < 8; i++) {
@@ -43,7 +43,7 @@ UINT16 Calculate_CRC16(BYTE* data_p, UINT16 length)
             }
             data >>= 1;
         }
-    } while (--length);
+    }
 
     crc = ~crc;
     data = crc;

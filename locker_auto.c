@@ -14,6 +14,7 @@ UINT16 Pack_T_Acknowledge_Message(BYTE buffer[], const UINT16 buffer_max, T_Ackn
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ACK_NAK));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->NAK_Reason));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -47,6 +48,7 @@ UINT16 Pack_T_Ping_Message(BYTE buffer[], const UINT16 buffer_max, T_Ping_Messag
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -78,6 +80,7 @@ UINT16 Pack_T_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT_
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -115,6 +118,7 @@ UINT16 Pack_T_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T_BIT
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -163,6 +167,7 @@ UINT16 Pack_T_Control_Panel_State_Request_Message(BYTE buffer[], const UINT16 bu
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->DIM_BRIGHT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->NVG_MODE));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -218,6 +223,7 @@ UINT16 Pack_T_Control_Panel_State_Response_Message(BYTE buffer[], const UINT16 b
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->DIM_BRIGHT));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->NVG_MODE));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -262,6 +268,7 @@ UINT16 Pack_T_Control_Panel_BIT_Request_Message(BYTE buffer[], const UINT16 buff
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -301,6 +308,7 @@ UINT16 Pack_T_Control_Panel_BIT_Response_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_Number), 20);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -340,6 +348,7 @@ UINT16 Pack_T_Display_Configuration_Command_Message(BYTE buffer[], const UINT16 
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -378,6 +387,9 @@ UINT16 Pack_T_Set_LCAS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCAS_Message_Data[f].SPARE));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -438,6 +450,7 @@ UINT16 Pack_T_Set_SPDU_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Light));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -474,6 +487,9 @@ UINT16 Pack_T_Set_Event_Text_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->Line[f]), 24);
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -511,6 +527,7 @@ UINT16 Pack_T_Set_Main_Selection_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Area));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -555,6 +572,9 @@ UINT16 Pack_T_Update_Window_Command_Message(BYTE buffer[], const UINT16 buffer_m
         }}
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -633,6 +653,7 @@ UINT16 Pack_T_Show_Dialog_Command_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Type));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Background_Color));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -671,6 +692,7 @@ UINT16 Pack_T_Set_Mode_Command_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mode));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -712,6 +734,9 @@ UINT16 Pack_T_Add_Pallet_Command_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Pallet_Data[f].Detent_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -790,6 +815,9 @@ UINT16 Pack_T_Add_Platform_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Platform_Data[f].Detent_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -869,6 +897,9 @@ UINT16 Pack_T_Add_CDS_Command_Message(BYTE buffer[], const UINT16 buffer_max, T_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Bundle_Data[f].Frame_Position_Offset));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -965,6 +996,9 @@ UINT16 Pack_T_Add_Logistics_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Offset[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1024,6 +1058,9 @@ UINT16 Pack_T_Delete_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1061,6 +1098,7 @@ UINT16 Pack_T_Add_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Forward_Lock_Position));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1095,6 +1133,7 @@ UINT16 Pack_T_Delete_Buffer_Stop_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1136,6 +1175,9 @@ UINT16 Pack_T_Set_Lock_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1186,6 +1228,9 @@ UINT16 Pack_T_Set_CRG_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1229,6 +1274,7 @@ UINT16 Pack_T_Set_PDM_Icons_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Left_PDM_Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Right_PDM_Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1263,6 +1309,7 @@ UINT16 Pack_T_Set_Towplate_Icon_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Icon));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1296,6 +1343,7 @@ UINT16 Pack_T_Highlight_Button_Command_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Button_Number));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1332,6 +1380,9 @@ UINT16 Pack_T_Highlight_Cargo_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Highlight_Data[f].Highlight));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1390,6 +1441,9 @@ UINT16 Pack_T_Highlight_Event_Command_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Highlight_Data[f].Highlight));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1451,6 +1505,9 @@ UINT16 Pack_T_Add_Event_Command_Message(BYTE buffer[], const UINT16 buffer_max, 
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Cargo_Number[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1493,6 +1550,9 @@ UINT16 Pack_T_Delete_Event_Command_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Number[f]));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1533,6 +1593,7 @@ UINT16 Pack_T_Control_Panel_Button_Press_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Release_Button));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Button));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1573,6 +1634,7 @@ UINT16 Pack_T_CHC_Display_BIT_Request_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_Check));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Display_Color));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1626,6 +1688,7 @@ UINT16 Pack_T_CHC_Display_BIT_Response_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_Ch(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_Number), 20);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->CP_Hardware_Part_ID));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1682,6 +1745,7 @@ UINT16 Pack_T_System_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->WOW));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADS_OK));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1752,6 +1816,7 @@ UINT16 Pack_T_Lock_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Lock_Right_15));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Lock_Right_16));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1836,6 +1901,7 @@ UINT16 Pack_T_Device_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Link_LOCK_Status));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Towplate_Jettison_Status));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -1915,6 +1981,7 @@ UINT16 Pack_T_LRU_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Right_7_Fault_Ramp));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Right_8_Fault_Ramp));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2008,6 +2075,7 @@ UINT16 Pack_T_Commands_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, 
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mission_Computer_YELLOW));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Mission_Computer_GREEN));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2080,6 +2148,9 @@ UINT16 Pack_T_Event_Data_Periodic_Message(BYTE buffer[], const UINT16 buffer_max
         // Cannot handle field type <VARIANT_ITEM> name <Event_Typed_Data>
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2298,6 +2369,9 @@ UINT16 Pack_T_Cargo_Periodic_Message(BYTE buffer[], const UINT16 buffer_max, T_C
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Logistic_Data[f].Side));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2458,6 +2532,9 @@ UINT16 Pack_T_Release_Force_Periodic_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Force_Data[f].Lock_1_Actual_Force));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2517,6 +2594,7 @@ UINT16 Pack_T_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buffer_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Side));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2552,6 +2630,7 @@ UINT16 Pack_T_Set_PDM_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->PDM));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2588,6 +2667,7 @@ UINT16 Pack_T_Set_Towplate_State_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Jettison));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Reset_Jettison));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2625,6 +2705,7 @@ UINT16 Pack_T_Set_CRG_State_Command_Message(BYTE buffer[], const UINT16 buffer_m
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Position));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Operation));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2667,6 +2748,7 @@ UINT16 Pack_T_Monitor_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Actuator_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2744,6 +2826,9 @@ UINT16 Pack_T_Monitor_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_ma
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->LCU_Bit_Data[f].LCU_Ultra_Capacitor_BIT_Fault));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2880,6 +2965,7 @@ UINT16 Pack_T_Command_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADP_GREEN_Button));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->ADP_Drogue_Jettison_Button));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -2974,6 +3060,7 @@ UINT16 Pack_T_Monitor_Status_Periodic_Message(BYTE buffer[], const UINT16 buffer
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Status_Data[f].Next_Lock_State));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3107,6 +3194,7 @@ UINT16 Pack_T_Mission_Parameter_Command_Message(BYTE buffer[], const UINT16 buff
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Event_Variant.Event_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Event_Data>
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3332,6 +3420,7 @@ UINT16 Pack_T_LCU_Status_Request_Message(BYTE buffer[], const UINT16 buffer_max,
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3369,6 +3458,9 @@ UINT16 Pack_T_LCU_Status_Response_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_Sensor_Data[f].Next_Lock_State));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3435,6 +3527,7 @@ UINT16 Pack_T_LCU_BIT_Request_Message(BYTE buffer[], const UINT16 buffer_max, T_
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3492,6 +3585,7 @@ UINT16 Pack_T_LCU_BIT_Response_Message(BYTE buffer[], const UINT16 buffer_max, T
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Actuator_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Solenoid_Serial_Switch_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3557,6 +3651,7 @@ UINT16 Pack_T_LCU_Set_Lock_State_Command_Message(BYTE buffer[], const UINT16 buf
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_15_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_16_State));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3604,6 +3699,7 @@ UINT16 Pack_T_LCU_Force_Request_Message(BYTE buffer[], const UINT16 buffer_max, 
         data->Word_Count = (UINT16) 14;
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3637,6 +3733,7 @@ UINT16 Pack_T_LCU_Force_Response_Message(BYTE buffer[], const UINT16 buffer_max,
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_1_Dog_Displacement_Force_Sensor));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Lock_2_Dog_Displacement_Force_Sensor));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3712,6 +3809,7 @@ UINT16 Pack_T_SOFTWARE_FIELD_LOAD_Message(BYTE buffer[], const UINT16 buffer_max
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Subformat_Data.Subformat_Type));
         // Cannot handle field type <VARIANT_ITEM> name <Subformat_Data>
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3859,6 +3957,7 @@ UINT16 Pack_T_Maintenance_Data_Request_Message(BYTE buffer[], const UINT16 buffe
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->Rx_ARINC_Data));
         byte_offset = Pack_Endian_08(buffer, buffer_max, byte_offset, (BYTE*)&(data->CHADS_Message_Data));
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.
@@ -3898,6 +3997,9 @@ UINT16 Pack_T_Maintenance_Data_ARINC_Periodic_Message(BYTE buffer[], const UINT1
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->ARINC_Message_32_Bit_Data[f].Word_2));
         }}
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Packet_ID_Seq));
+        data->Word_Count = (UINT16) byte_offset;
+        (void) Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Word_Count));
+        data->Header_CR = (UINT16) Calculate_CRC16(buffer, byte_offset);
         byte_offset = Pack_Endian_16(buffer, buffer_max, byte_offset, (BYTE*)&(data->Header_CR));
     }
     return byte_offset;  // Actual length of processed buffer.

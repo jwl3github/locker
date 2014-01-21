@@ -67,6 +67,14 @@ def Make_Valid_C_Enum(text, is_type = False):
         g_Enum_Cnt += 1
     return var
 # ------------------------------------------------------------------------------
+def Indent(indent, text):
+    count = text.count('\n')
+    if count > 1:   # Do not add spaces to any final '\n'
+        text = string.replace(text, '\n', '\n' + indent, count-1)
+    if count >= 1:
+        text = indent + text
+    return text
+# ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 # Record Processing
 # ------------------------------------------------------------------------------
@@ -338,100 +346,155 @@ def Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field_name, field_l
             (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
 # ------------------------------------------------------------------------------
 def Get_C_Field_Value_Coder(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, field_type, fixed_value, fixed_size=0):
-    ''' Used for fields that have a FIXED_VALUE or are computed fixed size. '''
+    ''' Used for fields that have a FIXED_VALUE. '''
     body  = '%s%s%s = (%s) %s;\n' % (field_parent, field_name, field_loop_index, field_type, fixed_value)
     fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
-    body += '        byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
+    body += 'byte_offset = %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
              (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
     return body
 # ------------------------------------------------------------------------------
+def Get_C_Field_Value_Coder_Keep_Offset(dir_suffix, size_suffix, field_parent, field_name, field_loop_index, field_type, fixed_value, fixed_size=0):
+    ''' Used for MSG_SIZE assignments that need to preserve the byte_offset. '''
+    # The byte_offset indicates the complete computed size of the message,
+    # and this value is used in MSG_SIZE and CRC calculations.
+    # If the standard method were used, then the call would have to be wrapped
+    # in a bunch of kludgy temp assignments to restore it.
+    body  = '%s%s%s = (%s) %s;\n' % (field_parent, field_name, field_loop_index, field_type, fixed_value)
+    fixed_size_str = (', %d' % fixed_size) if fixed_size > 0 else ''
+    body += '(void) %s_Endian_%s(buffer, buffer_max, byte_offset, (BYTE*)&(%s%s%s)%s);\n' % \
+             (dir_suffix, size_suffix, field_parent, field_name, field_loop_index, fixed_size_str)
+    return body
+# ------------------------------------------------------------------------------
+def Get_C_Struct_Coder_Size_Suffix(field_type):
+    ''' Determine the XX part of "[Un]Pack_Endian_XX" based on field type. '''
+    if field_type in ('UINT8',  'INT8'):              return '08'
+    if field_type in ('UINT16', 'INT16'):             return '16'
+    if field_type in ('UINT32', 'INT32', 'FLOAT32'):  return '32'
+    if field_type in ('UINT64', 'INT64', 'FLOAT64'):  return '64'
+    return ''
+# ------------------------------------------------------------------------------
+def Create_C_Msg_Size_Coder(rec_name, rec_fields, msg_size_field_num, field_parent):
+    if msg_size_field_num > 0:
+        field = rec_fields[msg_size_field_num]
+        fixed, msg_size_offset = Compute_Fixed_Size(rec_name, rec_fields[1:msg_size_field_num])
+        if fixed:
+            field_suffix = Get_C_Struct_Coder_Size_Suffix(field['type'])
+            return Get_C_Field_Value_Coder_Keep_Offset('Pack', field_suffix, field_parent, field['name'], '', field['type'], 'byte_offset')
+        else:
+            Log_Error('The MSG_SIZE field for message <%s> is not at a fixed offset and cannot be correctly populated.' % rec_name)
+            return ''
+    else:
+        return ''
+# ------------------------------------------------------------------------------
+def Create_C_Msg_Crc_Coder(rec_name, rec_fields, msg_crc_field_num, field_parent):
+    if msg_crc_field_num > 0:
+        field = rec_fields[msg_crc_field_num]
+        if field['type'] == 'UINT16':
+            msg_crc_call = 'Calculate_CRC16(buffer, byte_offset)'
+            field_suffix  = '16'
+        elif field['type'] == 'UINT32':
+            msg_crc_call = 'Calculate_CRC32(buffer, byte_offset)'
+            field_suffix  = '32'
+        else:
+            Log_Error('The CRC field for message <%s> is not UINT16 or UINT32 and cannot be correctly populated.' % rec_name)
+            return ''
+        return Get_C_Field_Value_Coder('Pack', field_suffix, field_parent, field['name'], '', field['type'], msg_crc_call)
+    else:
+        return ''
+# ------------------------------------------------------------------------------
 def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->'):
-    pack_8  = ['UINT8',  'INT8']
-    pack_16 = ['UINT16', 'INT16']
-    pack_32 = ['UINT32', 'INT32', 'FLOAT32']
-    pack_64 = ['UINT64', 'INT64', 'FLOAT64']
 
     # Note: All fields are assumed to be validated by this point, so
     #       many possible integrity checks are omitted.
 
-    msg_size_fixed, msg_size = Compute_Fixed_Size(rec_name, rec_fields)
-    msg_size_needed, msg_size_offset, msg_size_packer = False, 0, ''
+    body                     = ''
+    field_num                = 0
+    msg_crc_field_num        = 0
+    msg_size_field_num       = 0
 
-    crc_field_num = 0
-    in1  = '    '
-    in2  = in1 + in1
-    body = ''
-    field_num = 0
     for field in rec_fields[1:]:
         field_num       += 1
         field_loop_max   = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields)
         field_loop_index = '[f]' if field_loop_max else ''
-        size_suffix      = ''
+        size_suffix      = Get_C_Struct_Coder_Size_Suffix(field['type'])
 
         if field['abs_count'] > 0:   # Absolute count; max is an integer.
-            body += in2 + '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
+            body += '{ int f; for(f = 0; f < %s; f++) {\n' % field_loop_max
         elif field_loop_max:         # Relative count; max is a field name.
-            body += in2 + '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
+            body += '{ int f; for(f = 0; f < %s%s; f++) {\n' % (field_parent, field_loop_max)
 
-        if   field['type'] in pack_8:   size_suffix = '08'
-        elif field['type'] in pack_16:  size_suffix = '16'
-        elif field['type'] in pack_32:  size_suffix = '32'
-        elif field['type'] in pack_64:  size_suffix = '64'
-
+        # Handle special conditions:
+        #    1) For Pack: assign any FIXED_VALUE directly to the struct field   TODO - Uh oh... what about error testing?!
+        #    2) For Pack: Note the CRC field, if any, so it can be calculated/assigned last.
+        #    3) For Pack: Note the CRC field, if any, so it can be calculated/assigned last.
+        #    4) For Unpack: for dynamic sized structs, create the memory for the dynamic parts (i.e. pointer mallocs).
         if dir_suffix == 'Pack':
             if field['value'] != '':
-                body += in2 + Get_C_Field_Value_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index, field['type'], field['value'])
+                body += Get_C_Field_Value_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index, field['type'], field['value'])
                 continue
-            if field['crc_16'] or field['crc_32']:
-                crc_field_num = field_num
+            elif field['special'].startswith('MSG_SIZE'):
+                # If the message size is fixed, then field['value'] was already assigned and handled above.
+                # This will block will therefore only be used for dynamic sized messages.
+                msg_size_field_num = field_num
+            elif field['special'].startswith('CRC'):
+# TODO - This method only works well with CRC as last field.
+# TODO - A more general method would be a DBD-based EXCLUDE_FROM_CRC method that allows any initial/final fields to be omitted.
+# TODO - In this case, the loader should calculate field['crc_start_field'] and field['crc_end_field'] and the byte offsets would need to be determined last.
+                msg_crc_field_num = field_num
+                continue # Do not output a CRC coder... it will be done last in the subsequent code block.
         else:
             pass # TODO - For DYNAMIC SIZE Unpack, need to do the malloc for the value holder.
 
+        # Handle standard type-based encoder/decoder calls.
         if size_suffix != '':
-            body += in2 + Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index)
+            body += Get_C_Field_Coder(dir_suffix, size_suffix, field_parent, field['name'], field_loop_index)
+
         elif field['type'] == 'CHAR':
             # User may select 'CHAR' to me 1 CHAR, or may combine it with the SIZE_DEFINED_BY cell.
-            body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
+            body  += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
+
         elif field['type'].startswith('CHAR'):
             fixed_size = as_int(field['type'].replace('CHAR', ''))
-            body      += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
+            body      += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, fixed_size)
+
         elif field['type'] == 'STRING':
             # User could easily choose STRING instead of CHAR for dynamically-sized strings, so allow either one.
             if field['abs_count'] > 0:
-                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
+                # Treat the same as CHARx if a fixed length is given.
+                body  += Get_C_Field_Coder(dir_suffix, 'Ch', field_parent, field['name'], field_loop_index, field['abs_count'])
             else:
                 # This is for null-terminated strings only.
 #TODO How to handle the packing boundary?? Maybe STRING8/STRING16/etc??
-                body  += in2 + Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
+                body  += Get_C_Field_Coder(dir_suffix, 'Sz', field_parent, field['name'], field_loop_index)
+
         elif field['type'] == 'STRUCT':
             if g_rec_fields_by_name.has_key(field['fmt']):
                 child_rec_name, child_rec_fields = field['name'], g_rec_fields_by_name[field['fmt']]
                 body += Create_C_Struct_Coder(dir_suffix, child_rec_name, child_rec_fields, field_parent + field['name'] + field_loop_index + '.')
             else:
-                body += in2 + '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], field['fmt'])
-        else:
-            body += in2 + '// Cannot handle field type <%s> name <%s>\n' % (field['type'], field['name'])
+                body += '// Cannot handle unknown STRUCT name <%s> fmt <%s>\n' % (field['name'], field['fmt'])
+
+        else:   # Unknown TYPE
+            body += '// Cannot handle field type <%s> name <%s>\n' % (field['type'], field['name'])
 
         if field_loop_max:
-            body += in2 + '}}\n' # For loop and scoping block closure.
+            body += '}}\n' # For loop and scoping block closure.
 
+    # Wrap the created body with the function prototype text and other fixed wrapper code.
     global g_Proto, g_Coder
     if field_parent == 'data->':
+        in1 = '    '
+        in2 = in1 + in1
         g_Proto += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data);\n' % (dir_suffix, rec_name, rec_name)
         g_Coder += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)\n' % (dir_suffix, rec_name, rec_name)
         g_Coder += '{\n'
-        g_Coder += in1 + 'UINT16 byte_offset = 0;\n'
-        g_Coder += in1 + 'if (data != 0) {\n'
-        g_Coder += body
-        # TODO - insert dynamic size (if not fixed) and CRC data last
-        #if not msg_size_fixed:
-        #    g_Coder += in2 + '{ UINT16 temp_byte_offset = byte_offset;\n'
-        #    g_Coder += in2 + '  byte_offset = %d;\n' %
-        #    g_Coder += in2 + '  ' + Get_C_Field_Coder(dir_suffix, msg_size_packer, field_parent, field['name'], '')
-        #    g_Coder += in2 + '  byte_offset = temp_byte_offset; }\n'
-        #if not msg_crc_offset:
-        g_Coder += in1 + '}\n'
-        g_Coder += in1 + 'return byte_offset;  // Actual length of processed buffer.\n'
+        g_Coder += Indent(in1, 'UINT16 byte_offset = 0;\n')
+        g_Coder += Indent(in1, 'if (data != 0) {\n')
+        g_Coder += Indent(in2, body)
+        g_Coder += Indent(in2, Create_C_Msg_Size_Coder(rec_name, rec_fields, msg_size_field_num, field_parent))
+        g_Coder += Indent(in2, Create_C_Msg_Crc_Coder(rec_name, rec_fields, msg_crc_field_num, field_parent))
+        g_Coder += Indent(in1, '}\n')
+        g_Coder += Indent(in1, 'return byte_offset;  // Actual length of processed buffer.\n')
         g_Coder += '}\n'
     else:
         return body
