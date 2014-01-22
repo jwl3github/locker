@@ -20,14 +20,16 @@ g_enum = {}
 g_rec_fields_by_order = []
 g_rec_fields_by_name  = {}
 g_rec_size_by_name    = {}    # 0 if message is dynamic size
-g_Coder    = ''
-g_Proto    = ''
-g_Aux_Dec  = ''
-g_Msg_Dec  = ''
-g_Enum_Dec = ''
-g_Enum_Cnt = 1000
-g_Test_Funcs = ''
-g_Test_Calls = ''
+g_Py_Pack      = ''
+g_Py_Unpack    = ''
+g_C_Coder      = ''
+g_C_Proto      = ''
+g_Aux_Dec      = ''
+g_Msg_Dec      = ''
+g_Enum_Dec     = ''
+g_Enum_Cnt     = 1000
+g_Test_Funcs   = ''
+g_Test_Calls   = ''
 g_Test_Counter = 0
 
 # ------------------------------------------------------------------------------
@@ -69,12 +71,14 @@ def Make_Valid_C_Enum(text, is_type = False):
         g_Enum_Cnt += 1
     return var
 # ------------------------------------------------------------------------------
-def Indent(indent, text):
-    count = text.count('\n')
-    if count > 1:   # Do not add spaces to any final '\n'
-        text = string.replace(text, '\n', '\n' + indent, count-1)
-    if count >= 1:
-        text = indent + text
+def Indent(level, text):
+    if level > 0:
+        indent = level * '    '
+        count  = text.count('\n')
+        if count > 1:   # Do not add spaces to any final '\n'
+            text = string.replace(text, '\n', '\n' + indent, count-1)
+        if count >= 1:
+            text = indent + text
     return text
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -428,23 +432,67 @@ def Create_C_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent='data->
             body += '}}\n' # For loop and scoping block closure.
 
     # Wrap the created body with the function prototype text and other fixed wrapper code.
-    global g_Proto, g_Coder
+    global g_C_Proto, g_C_Coder
     if field_parent == 'data->':
         in1 = '    '
         in2 = in1 + in1
-        g_Proto += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data);\n' % (dir_suffix, rec_name, rec_name)
-        g_Coder += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)\n' % (dir_suffix, rec_name, rec_name)
-        g_Coder += '{\n'
-        g_Coder += Indent(in1, 'UINT16 byte_offset = 0;\n')
-        g_Coder += Indent(in1, 'if (data != 0) {\n')
-        g_Coder += Indent(in2, body)
-        g_Coder += Indent(in2, Create_C_Msg_Size_Coder(rec_name, rec_fields, msg_size_field_num, field_parent))
-        g_Coder += Indent(in2, Create_C_Msg_Crc_Coder(rec_name, rec_fields, msg_crc_field_num, field_parent))
-        g_Coder += Indent(in1, '}\n')
-        g_Coder += Indent(in1, 'return byte_offset;  // Actual length of processed buffer.\n')
-        g_Coder += '}\n'
+        g_C_Proto += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data);\n' % (dir_suffix, rec_name, rec_name)
+        g_C_Coder += 'UINT16 %s_%s(BYTE buffer[], const UINT16 buffer_max, %s* data)\n' % (dir_suffix, rec_name, rec_name)
+        g_C_Coder += '{\n'
+        g_C_Coder += Indent(1, 'UINT16 byte_offset = 0;\n')
+        g_C_Coder += Indent(1, 'if (data != 0) {\n')
+        g_C_Coder += Indent(2, body)
+        g_C_Coder += Indent(2, Create_C_Msg_Size_Coder(rec_name, rec_fields, msg_size_field_num, field_parent))
+        g_C_Coder += Indent(2, Create_C_Msg_Crc_Coder(rec_name, rec_fields, msg_crc_field_num, field_parent))
+        g_C_Coder += Indent(1, '}\n')
+        g_C_Coder += Indent(1, 'return byte_offset;  // Actual length of processed buffer.\n')
+        g_C_Coder += '}\n'
     else:
         return body
+# ------------------------------------------------------------------------------
+def Create_Py_Struct_Coder(dir_suffix, rec_name, rec_fields, field_parent=''):
+    endian = '!'   # Network (Big) # see http://docs.python.org/2/library/struct.html
+    packer = {
+            'CHAR':    'c',
+            'INT8':    'c',
+            'UINT8':   'B',
+            'INT16':   'h',
+            'UINT16':  'H',
+            'INT32':   'i',
+            'UINT32':  'I',
+            'INT64':   'q',
+            'UINT64':  'Q',
+            'FLOAT32': 'f',
+            'FLOAT64': 'd',
+            'STRING':  's',
+            }
+    into    = ''
+    fmt     = ''
+    msg_id  = -1
+    for field in rec_fields[1:]:
+        if field['msg_id']:
+            msg_id = as_int(field['value'])
+        field_loop_max = Get_Value_For_Defined_By(field['abs_count'], field['rel_count'], rec_fields, field_parent)
+        if field_loop_max:
+            Log_Info('Cannot handle indexes yet - rec %s field %s' % (rec_name, field['name']))
+            return
+        elif packer.has_key(field['type']):
+            assign  = 'rec["%s%s"]' % (field_parent, field['name'])
+            into   += (',' + assign) if into else assign
+            fmt    += packer[field['type']]
+        else:
+            Log_Info('No packer for field; skipping record - rec %s field %s' % (rec_name, field['name']))
+            return
+
+    global g_Py_Pack, g_Py_Unpack
+    if into and fmt:  # A few VARIANTS are empty and yield no value here.
+        if dir_suffix == 'Pack':
+            g_Py_Pack   += Indent(1, 'elif msg_type == %d:  #### %s\n' % (msg_id, rec_fields[0]['fmt']))
+            g_Py_Pack   += Indent(2, 'struct.pack_into("%s", buffer, %s)\n\n' % (fmt,into))
+        else:
+            g_Py_Unpack += Indent(1, 'elif msg_type == %d:  #### %s\n' % (msg_id, rec_fields[0]['fmt']))
+            g_Py_Unpack += Indent(2, '%s = struct.unpack_from("%s", buffer)\n\n' % (into, fmt))
+
 # ------------------------------------------------------------------------------
 # Test
 # ------------------------------------------------------------------------------
@@ -538,23 +586,23 @@ def Create_C_Test_Function(rec_name, rec_fields, out_field_parent='out_msg.', in
     if out_field_parent == 'out_msg.':
         in1 = '    '
         msg_name = rec_fields[0]['fmt']
-        g_Test_Calls += Indent(in1, 'if (test_%s() == 1) {pass++;} else {fail++;}\n' % msg_name)
+        g_Test_Calls += Indent(1, 'if (test_%s() == 1) {pass++;} else {fail++;}\n' % msg_name)
 
         g_Test_Funcs += 'UINT16 test_%s()\n' % msg_name
         g_Test_Funcs += '{\n'
-        g_Test_Funcs += Indent(in1, 'UINT16 ok = 1;\n')
-        g_Test_Funcs += Indent(in1, 'UINT16 out_offset = 0;\n')
-        g_Test_Funcs += Indent(in1, 'UINT16 in_offset = 0;\n')
-        g_Test_Funcs += Indent(in1, '%s* net_msg = 0;\n' % msg_name)
-        g_Test_Funcs += Indent(in1, '%s  out_msg;\n' % msg_name)
-        g_Test_Funcs += Indent(in1, '%s   in_msg;\n' % msg_name)
-        g_Test_Funcs += Indent(in1, 'printf("----- %s\\n");\n' % rec_name)
-        g_Test_Funcs += Indent(in1, out_body)
-        g_Test_Funcs += Indent(in1, 'out_offset = Pack_%s(buffer, buffer_max, &out_msg);\n' % msg_name)
-        g_Test_Funcs += Indent(in1, 'net_msg    = (%s*) buffer;\n' % msg_name)
-        g_Test_Funcs += Indent(in1, 'in_offset  = Unpack_%s(buffer, buffer_max, &in_msg);\n' % msg_name)
-        g_Test_Funcs += Indent(in1, in_body)
-        g_Test_Funcs += Indent(in1, 'return ok;\n')
+        g_Test_Funcs += Indent(1, 'UINT16 ok = 1;\n')
+        g_Test_Funcs += Indent(1, 'UINT16 out_offset = 0;\n')
+        g_Test_Funcs += Indent(1, 'UINT16 in_offset = 0;\n')
+        g_Test_Funcs += Indent(1, '%s* net_msg = 0;\n' % msg_name)
+        g_Test_Funcs += Indent(1, '%s  out_msg;\n' % msg_name)
+        g_Test_Funcs += Indent(1, '%s   in_msg;\n' % msg_name)
+        g_Test_Funcs += Indent(1, 'printf("----- %s\\n");\n' % rec_name)
+        g_Test_Funcs += Indent(1, out_body)
+        g_Test_Funcs += Indent(1, 'out_offset = Pack_%s(buffer, buffer_max, &out_msg);\n' % msg_name)
+        g_Test_Funcs += Indent(1, 'net_msg    = (%s*) buffer;\n' % msg_name)
+        g_Test_Funcs += Indent(1, 'in_offset  = Unpack_%s(buffer, buffer_max, &in_msg);\n' % msg_name)
+        g_Test_Funcs += Indent(1, in_body)
+        g_Test_Funcs += Indent(1, 'return ok;\n')
         g_Test_Funcs += '}\n'
     else:
         return out_body, in_body
@@ -594,10 +642,18 @@ def Load_Messages_Spreadsheet(filename):
 
     for rec_name in g_rec_fields_by_order:
         rec_fields = g_rec_fields_by_name[rec_name]
+
         Create_C_Struct(rec_name, rec_fields)
         Create_C_Struct_Coder('Pack',   rec_name, rec_fields)
         Create_C_Struct_Coder('Unpack', rec_name, rec_fields)
         Create_C_Test_Function(rec_name, rec_fields)
+
+        Create_Py_Struct_Coder('Pack',   rec_name, rec_fields)
+        Create_Py_Struct_Coder('Unpack', rec_name, rec_fields)
+        #Create_Py_Test_Function(rec_name, rec_fields)
+
+    print g_Py_Pack
+    print g_Py_Unpack
 
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -685,7 +741,7 @@ if __name__=='__main__':
     h_text += '/* -- Msg Structs -- */\n'
     h_text += g_Msg_Dec
     h_text += '/* -- Prototypes -- */\n'
-    h_text += g_Proto
+    h_text += g_C_Proto
     h_text += '#endif /* INCLUDED_Gen_Structs_h */\n'
 
     auto_gen_basename = 'locker_auto'
@@ -700,7 +756,7 @@ if __name__=='__main__':
     print 'Creating %s ...' % auto_gen_c
     c_file = open(auto_gen_c, 'w')
     c_file.write('#include "%s"\n' % auto_gen_h)
-    c_file.write(g_Coder)
+    c_file.write(g_C_Coder)
     c_file.close()
 
     t_text  = '#include <stdio.h>\n'
