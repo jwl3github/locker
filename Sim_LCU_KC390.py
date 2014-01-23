@@ -77,8 +77,14 @@ def Rx_UDP():
         print 'slave LCU listening...'
         msg = rx_sock.recv(10240)
         print 'slave got: ' + msg
-        if msg == 'startup':
-            Tx_UDP('slave-is-ready')
+        if msg.startswith('T_LCU_Status_Request_Message'):
+            Tx_UDP('T_LCU_Status_Response_Message')
+        elif msg.startswith('T_LCU_BIT_Request_Message'):
+            Tx_UDP('T_LCU_BIT_Response_Message')
+        elif msg.startswith('T_LCU_Set_Lock_State_Command_Message'):
+            Tx_UDP('T_LCU_BIT_Response_Message')
+        elif msg.startswith('T_LCU_Force_Request_Message'):
+            Tx_UDP('T_LCU_Force_Response_Message')
 
 # ##############################################################################
 listen_thread = threading.Thread(target = Rx_UDP)

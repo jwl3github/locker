@@ -164,12 +164,79 @@ def Rx_UDP():
             pass
     while True:
         print 'master CP listening...'
+
+        #T_LCU_BIT_Request_Message
+        #    Lock_1_Actuator_Serial_Switch_IBIT;
+        #    Lock_2_Actuator_Serial_Switch_IBIT;
+        #    Lock_1_Actuator_Serial_Switch_State;
+        #    Lock_2_Actuator_Serial_Switch_State;
+        #    Lock_1_Solenoid_Serial_Switch_IBIT;
+        #    Lock_2_Solenoid_Serial_Switch_IBIT;
+        #    Lock_1_Solenoid_Serial_Switch_State;
+        #    Lock_2_Solenoid_Serial_Switch_State;
+
+        #T_LCU_Set_Lock_State_Command_Message;
+        #    Lock_1_State;
+        #    Lock_2_State;
+        #    Lock_3_State;
+        #    Lock_4_State;
+        #    Lock_5_State;
+        #    Lock_6_State;
+        #    Lock_7_State;
+        #    Lock_8_State;
+        #    Lock_9_State;
+        #    Lock_10_State;
+        #    Lock_11_State;
+        #    Lock_12_State;
+        #    Lock_13_State;
+        #    Lock_14_State;
+        #    Lock_15_State;
+        #    Lock_16_State;
+        #    Packet_ID_Seq;
+        #    Header_CR;
+
+        #T_LCU_Force_Request_Message
+
         msg = rx_sock.recv(10240)
-        if msg == 'slave-is-ready':
+        if msg.startswith('T_LCU_Status_Response_Message'):
+            # UINT8                BIT_Passed;
+            # UINT16               Lock_Sensor_Count;
+            # T_Lock_Sensor_Data  * Lock_Sensor_Data;
+            #     typedef struct {
+            #         UINT8                Lock_Busy;
+            #         UINT16               Lock_State;
+            #         UINT16               Next_Lock_State;
+            #     } T_Lock_Sensor_Data;
             lcp_sim.set_state('AFT',   'UNLOCKED')
             lcp_sim.set_state('FWD',   'UNLOCKED')
             lcp_sim.set_state('CRG_L', 'UNLOCKED')
             lcp_sim.set_state('CRG_R', 'UNLOCKED')
+        elif msg.startswith('T_LCU_BIT_Response_Message'):
+            print msg
+            # Overall_BIT_Passed;
+            # Actuator_Extended;
+            # Actuator_Retracted;
+            # Capacitor_Charge_Disable;
+            # Capacitor_Charge_State;
+            # Actuator_Current;
+            # Lock_Dog_Location_Sensor;
+            # Lock_Dog_Displacement_Force_Sensor;
+            # ADS_Trigger_Location_Sensor;
+            # LCU_Point_of_Load_Power_Fault;
+            # Actuator_Power_Enable_Serial_Switch_Fault;
+            # Actuator_Extend_Serial_Switch_Fault;
+            # Actuator_Retract_Serial_Switch_Fault;
+            # Capacitor_Charge_Fault;
+            # Reset_Fault;
+            # Communications_Fault;
+            # Actuator_Serial_Switch_State;
+            # Solenoid_Serial_Switch_State;
+        elif msg.startswith('T_LCU_Force_Response_Message'):
+            # Lock_1_Dog_Displacement_Force_Sensor;
+            # Lock_2_Dog_Displacement_Force_Sensor;
+            print msg
+        else:
+            print 'huh? ' + msg
 # ##############################################################################
 if __name__ == "__main__":
     listen_thread = threading.Thread(target = Rx_UDP)
@@ -180,6 +247,6 @@ if __name__ == "__main__":
     first_lock_id = 1
     lcp_type      = 1
     lcp_sim       = Sim_LCP_KC390(tk_root, first_lock_id, lcp_type)
-    Tx_UDP('startup')
+    Tx_UDP('T_LCU_Status_Request_Message')
     tk_root.mainloop()
 
