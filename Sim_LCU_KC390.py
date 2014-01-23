@@ -1,13 +1,16 @@
 from Tkinter import *
+import socket
+import struct
+import threading
 
+rx_sock = None
+tx_sock = None
 unit = {}
 unit_by_widget = {}
 
 # ------------------------------------------------------------------------------
 def Handle_Click(event):
     # http://effbot.org/tkinterbook/tkinter-events-and-bindings.htm
-    print dir(event)
-    print event.widget
     if unit_by_widget.has_key(event.widget):
         print 'Handle_Click ' + unit_by_widget[event.widget]
     else:
@@ -43,7 +46,44 @@ def Make_Rx_Lock(parent, grid_row, unit_id, io_type, io_name, width=10, **option
 
     unit[io_name] = {'unit_id':unit_id, 'io_name':io_name, 'io_type':io_type, 'control':control}
     unit_by_widget[control] = io_name
-# ==============================================================================
+# ##############################################################################
+def Tx_UDP(msg):
+    MCAST_GRP = '224.1.1.1'
+    MCAST_PORT = 5006        # LCU is Slave:  Tx on port=5006, Rx on port=5007
+    global tx_sock
+    if tx_sock is None:
+        tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        tx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+    print '  .. Slave Sending: ' + msg
+    tx_sock.sendto(msg, (MCAST_GRP, MCAST_PORT))
+
+# ##############################################################################
+def Rx_UDP():
+    while True:
+        try:
+            MCAST_GRP = '224.1.1.2'
+            MCAST_PORT = 5007        # LCU is Slave:  Tx on port=5006, Rx on port=5007
+            rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            rx_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            rx_sock.bind(('', MCAST_PORT))
+            mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+            rx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            print 'slave listener connected!'
+            break
+        except:
+            print 'slave listener retry...'
+            pass
+    while True:
+        print 'slave LCU listening...'
+        msg = rx_sock.recv(10240)
+        print 'slave got: ' + msg
+        if msg == 'startup':
+            Tx_UDP('slave-is-ready')
+
+# ##############################################################################
+listen_thread = threading.Thread(target = Rx_UDP)
+listen_thread.start()
+
 master = Tk()
 
 Make_Tx_Lock(master,  0, -1, 'GPIO', 'SOLENOID_CMD')

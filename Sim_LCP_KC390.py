@@ -1,7 +1,16 @@
 from Tkinter import *
 import Tkinter as tk
+import socket
+import struct
+import threading
+import time
 
-# ==============================================================================
+rx_sock = None
+tx_sock = None
+lcp_sim = None
+
+# ##############################################################################
+
 class CP_Label(Label):
     def __init__(self, parent, lock_id, grp_id):
         Label.__init__(self, parent, text="[%d.%s]" % (lock_id, grp_id))
@@ -125,13 +134,52 @@ class Sim_LCP_KC390(Frame):
         self.testing = not self.testing
         for grp in ('AFT', 'FWD', 'CRG_L', 'CRG_R'):
             self.btn[grp].set_test(self.testing)
-
         #self.btn['RIGHT'].set_state('bad-state')   ## Demo of flashing fail
-# ==============================================================================
+# ##############################################################################
+def Tx_UDP(msg):
+    MCAST_GRP = '224.1.1.2'
+    MCAST_PORT = 5007 # LCP is master:  Tx on port=5007, Rx on port=5006
+    global tx_sock
+    if tx_sock is None:
+        tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        tx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+    print '  .. Master Sending: ' + msg
+    tx_sock.sendto(msg, (MCAST_GRP, MCAST_PORT))
+# ##############################################################################
+def Rx_UDP():
+    global rx_sock
+    while True:
+        try:
+            MCAST_GRP = '224.1.1.1'
+            MCAST_PORT = 5006 # LCP is master:  Tx on port=5007, Rx on port=5006
+            rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            rx_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            rx_sock.bind(('', MCAST_PORT))
+            mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+            rx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            print 'master CP listener connected!'
+            break
+        except:
+            print 'master CP listener retry...'
+            pass
+    while True:
+        print 'master CP listening...'
+        msg = rx_sock.recv(10240)
+        if msg == 'slave-is-ready':
+            lcp_sim.set_state('AFT',   'UNLOCKED')
+            lcp_sim.set_state('FWD',   'UNLOCKED')
+            lcp_sim.set_state('CRG_L', 'UNLOCKED')
+            lcp_sim.set_state('CRG_R', 'UNLOCKED')
+# ##############################################################################
 if __name__ == "__main__":
+    listen_thread = threading.Thread(target = Rx_UDP)
+    listen_thread.start()
+
+    global lcp_sim
     tk_root       = Tk()
     first_lock_id = 1
     lcp_type      = 1
     lcp_sim       = Sim_LCP_KC390(tk_root, first_lock_id, lcp_type)
+    Tx_UDP('startup')
     tk_root.mainloop()
 
