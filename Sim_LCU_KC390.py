@@ -1,12 +1,10 @@
 from Tkinter import *
-import socket
-import struct
-import threading
+from Sim_UDP_Channel import *
 
-rx_sock = None
-tx_sock = None
+DATA_CHANNEL = None
 unit = {}
 unit_by_widget = {}
+grid_row = 0
 
 # ------------------------------------------------------------------------------
 def Handle_Click(event):
@@ -23,7 +21,9 @@ def Handle_Return(event):
     else:
         print 'Handle_Return unknown-widget'
 # ------------------------------------------------------------------------------
-def Make_Tx_Lock(parent, grid_row, unit_id, io_type, io_name, width=10, **options):
+def Make_Tx_Lock(parent, unit_id, io_type, io_name, width=10, **options):
+    global grid_row
+    grid_row += 1
     label   = Label(parent, text=io_name)
     control = Button(parent, **options)
     if width:
@@ -31,11 +31,12 @@ def Make_Tx_Lock(parent, grid_row, unit_id, io_type, io_name, width=10, **option
     label.grid(row=grid_row, column=0)
     control.grid(row=grid_row, column=1)
     control.bind('<Button-1>', Handle_Click)
-
     unit[io_name] = {'unit_id':unit_id, 'io_name':io_name, 'io_type':io_type, 'control':control}
     unit_by_widget[control] = io_name
 # ------------------------------------------------------------------------------
-def Make_Rx_Lock(parent, grid_row, unit_id, io_type, io_name, width=10, **options):
+def Make_Rx_Lock(parent, unit_id, io_type, io_name, width=10, **options):
+    global grid_row
+    grid_row += 1
     label   = Label(parent, text=io_name)
     control = Entry(parent, **options)
     if width:
@@ -43,68 +44,96 @@ def Make_Rx_Lock(parent, grid_row, unit_id, io_type, io_name, width=10, **option
     label.grid(row=grid_row, column=0)
     control.grid(row=grid_row, column=1)
     control.bind('<Return>', Handle_Return)
-
     unit[io_name] = {'unit_id':unit_id, 'io_name':io_name, 'io_type':io_type, 'control':control}
     unit_by_widget[control] = io_name
+# ------------------------------------------------------------------------------
+def Make_Field(parent, unit_id, field_type, field_name, width=10, **options):
+    global grid_row
+    grid_row += 1
+    label = Label(parent, text=field_name)
+    if field_type == 'BOOLEAN':
+        control = Checkbutton(parent, **options)
+        control.bind('<Button-1>', Handle_Click)
+    elif field_type == 'UINT16':
+        control = Entry(parent, **options)
+        control.bind('<Return>', Handle_Return)
+    label.grid(row=grid_row, column=0)
+    control.grid(row=grid_row, column=1)
+    unit[field_name] = {'unit_id':unit_id, 'io_name':field_name, 'io_type':field_type, 'control':control}
+    unit_by_widget[control] = field_name
 # ##############################################################################
-def Tx_UDP(msg):
-    MCAST_GRP = '224.1.1.1'
-    MCAST_PORT = 5006        # LCU is Slave:  Tx on port=5006, Rx on port=5007
-    global tx_sock
-    if tx_sock is None:
-        tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        tx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-    print '  .. Slave Sending: ' + msg
-    tx_sock.sendto(msg, (MCAST_GRP, MCAST_PORT))
-
+def Send_T_LCU_Status_Response_Message():
+    DATA_CHANNEL.Send_Tx('T_LCU_Status_Response_Message')
+# ------------------------------------------------------------------------------
+def Send_T_LCU_BIT_Response_Message():
+    DATA_CHANNEL.Send_Tx('T_LCU_BIT_Response_Message')
+# ------------------------------------------------------------------------------
+def Send_T_LCU_BIT_Response_Message():
+    DATA_CHANNEL.Send_Tx('T_LCU_BIT_Response_Message')
+# ------------------------------------------------------------------------------
+def Send_T_LCU_Force_Response_Message():
+    DATA_CHANNEL.Send_Tx('T_LCU_Force_Response_Message')
+# ------------------------------------------------------------------------------
+def Recv_Message(msg):
+    if msg.startswith('T_LCU_Status_Request_Message'):
+        Send_T_LCU_Status_Response_Message()
+    elif msg.startswith('T_LCU_BIT_Request_Message'):
+        Send_T_LCU_BIT_Response_Message()
+    elif msg.startswith('T_LCU_Set_Lock_State_Command_Message'):
+        pass   # TODO - no response for Lock message ?
+    elif msg.startswith('T_LCU_Force_Request_Message'):
+        Send_T_LCU_Force_Response_Message()
+    else:
+        print 'Recv_Message - unknown ' + msg
 # ##############################################################################
-def Rx_UDP():
-    while True:
-        try:
-            MCAST_GRP = '224.1.1.2'
-            MCAST_PORT = 5007        # LCU is Slave:  Tx on port=5006, Rx on port=5007
-            rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            rx_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            rx_sock.bind(('', MCAST_PORT))
-            mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
-            rx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-            print 'slave listener connected!'
-            break
-        except:
-            print 'slave listener retry...'
-            pass
-    while True:
-        print 'slave LCU listening...'
-        msg = rx_sock.recv(10240)
-        print 'slave got: ' + msg
-        if msg.startswith('T_LCU_Status_Request_Message'):
-            Tx_UDP('T_LCU_Status_Response_Message')
-        elif msg.startswith('T_LCU_BIT_Request_Message'):
-            Tx_UDP('T_LCU_BIT_Response_Message')
-        elif msg.startswith('T_LCU_Set_Lock_State_Command_Message'):
-            Tx_UDP('T_LCU_BIT_Response_Message')
-        elif msg.startswith('T_LCU_Force_Request_Message'):
-            Tx_UDP('T_LCU_Force_Response_Message')
 
-# ##############################################################################
-listen_thread = threading.Thread(target = Rx_UDP)
-listen_thread.start()
+first_lock_id = 1
+lru_id        = 5   # TODO value is faked one for LCU-C-1
 
-master = Tk()
+tk_root = Tk()
+tk_root.wm_title('LCU for Lock %d/%d' % (first_lock_id, first_lock_id+1))
 
-Make_Tx_Lock(master,  0, -1, 'GPIO', 'SOLENOID_CMD')
-Make_Tx_Lock(master,  1, -1, 'GPIO', 'ACTUATOR_CMD')
-Make_Tx_Lock(master,  2, -1, 'GPIO', 'WATCHDOG')
-Make_Tx_Lock(master,  3, -1, 'PWM',  'STATUS_LEDS')
-Make_Rx_Lock(master,  4, -1, 'ADC',  'ACTUATOR_CURRENT')
-Make_Rx_Lock(master,  5, -1, 'ADC',  'FORCE_SENSOR')
-Make_Rx_Lock(master,  6, -1, 'GPIO', 'LOCK_POS')
-Make_Rx_Lock(master,  7, -1, 'GPIO', 'IDENT')
-Make_Rx_Lock(master,  8, -1, 'GPIO', 'LEFT_RIGHT_IND')
-Make_Rx_Lock(master,  9, -1, 'GPIO', 'SOLENOID_LOW_V')
-Make_Rx_Lock(master, 10, -1, 'GPIO', 'STATUS_IND')
 
-mainloop()
+DATA_CHANNEL = Sim_UDP_Channel('224.1.1.1', 5006,  # Tx: LCU (Slave) Response channel
+                               '224.1.1.2', 5007)  # Rx: CP (Master) Command channel
+DATA_CHANNEL.Start_Tx()
+DATA_CHANNEL.Start_Rx(Recv_Message)
+
+lock_id = first_lock_id
+
+Make_Tx_Lock(tk_root, lock_id, 'GPIO', 'SOLENOID_CMD')
+Make_Tx_Lock(tk_root, lock_id, 'GPIO', 'ACTUATOR_CMD')
+Make_Tx_Lock(tk_root, lock_id, 'GPIO', 'WATCHDOG')
+Make_Tx_Lock(tk_root, lock_id, 'PWM',  'STATUS_LEDS')
+
+Make_Rx_Lock(tk_root, lock_id, 'ADC',  'ACTUATOR_CURRENT')
+Make_Rx_Lock(tk_root, lock_id, 'ADC',  'FORCE_SENSOR')
+Make_Rx_Lock(tk_root, lock_id, 'GPIO', 'LOCK_POS')
+Make_Rx_Lock(tk_root, lock_id, 'GPIO', 'IDENT')
+Make_Rx_Lock(tk_root, lock_id, 'GPIO', 'LEFT_RIGHT_IND')
+Make_Rx_Lock(tk_root, lock_id, 'GPIO', 'SOLENOID_LOW_V')
+Make_Rx_Lock(tk_root, lock_id, 'GPIO', 'STATUS_IND')
+
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Overall_BIT_Passed')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Actuator_Extended')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Actuator_Retracted')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Capacitor_Charge_Disable')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Capacitor_Charge_State')
+Make_Field  (tk_root, lock_id, 'UINT16',  'Actuator_Current')
+Make_Field  (tk_root, lock_id, 'UINT16',  'Lock_Dog_Location_Sensor')
+Make_Field  (tk_root, lock_id, 'UINT16',  'Lock_Dog_Displacement_Force_Sensor')
+Make_Field  (tk_root, lock_id, 'UINT16',  'ADS_Trigger_Location_Sensor')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'LCU_Point_of_Load_Power_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Actuator_Power_Enable_Serial_Switch_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Actuator_Extend_Serial_Switch_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Actuator_Retract_Serial_Switch_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Capacitor_Charge_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Reset_Fault')
+Make_Field  (tk_root, lock_id, 'BOOLEAN', 'Communications_Fault')
+Make_Field  (tk_root, lock_id, 'UINT16',  'Actuator_Serial_Switch_State')   # ENUM-On_Off
+Make_Field  (tk_root, lock_id, 'UINT16',  'Solenoid_Serial_Switch_State')   # ENUM-On_Off
+
+tk_root.mainloop()
 
 # CSCI List
 #

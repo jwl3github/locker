@@ -1,25 +1,120 @@
 from Tkinter import *
 import Tkinter as tk
-import socket
-import struct
-import threading
+import sys
 import time
+from Sim_UDP_Channel import *
 
-rx_sock = None
-tx_sock = None
-lcp_sim = None
+CP_SIM = None
+
+## This 2-channel design may be over-kill, but concerned that the
+## eventual inclusion of the CHC may require the separation.
+##
+## Further, exerting system control via an external Monitor/Injector
+## tool may complicate things even more.
+
+DATA_CHANNEL = None
+
+# ==============================================================================
+# TX
+# ==============================================================================
+def Send_T_LCU_Status_Request_Message():
+    msg = 'T_LCU_Status_Request_Message'
+    DATA_CHANNEL.Send_Tx(msg)
+# ------------------------------------------------------------------------------
+def Send_T_LCU_Bit_Request(): #lock_id, act_ibit, act_state, sol_ibit, sol_state):
+        #    Lock_1_Actuator_Serial_Switch_IBIT;
+        #    Lock_2_Actuator_Serial_Switch_IBIT;
+        #    Lock_1_Actuator_Serial_Switch_State;
+        #    Lock_2_Actuator_Serial_Switch_State;
+        #    Lock_1_Solenoid_Serial_Switch_IBIT;
+        #    Lock_2_Solenoid_Serial_Switch_IBIT;
+        #    Lock_1_Solenoid_Serial_Switch_State;
+        #    Lock_2_Solenoid_Serial_Switch_State;
+    msg = 'T_LCU_BIT_Request_Message'
+    DATA_CHANNEL.Send_Tx(msg)
+# ------------------------------------------------------------------------------
+def Send_T_LCU_Set_Lock_State_Command_Message(lock_id, state):
+
+    # JWL: TODO Is there a design issue/opportunity here?
+# TODO any given LCU will only care about a pair of lock states, and furthermore
+# TODO any given CP can only control a pair as well.
+# TODO My guess is that the Dest_ID controls how the message is used, but
+# TODO this still represents quite a bit of mis-information floating around.
+# TODO why not 'UINT16 Lock_A_Id; UINT16 Lock_A_State; UINT16 Lock_B_Id; UINT16 Lock_B_State'
+# TODO or even notice BIT Req just calls them 'Lock_1/Lock_2' so no need for '_Id'
+    msg  = 'T_LCU_Set_Lock_State_Command_Message,'
+    msg += 'Lock_%d_State=%s,' % (lock_id, state)
+    DATA_CHANNEL.Send_Tx(msg)
+# ------------------------------------------------------------------------------
+def Send_T_LCU_Force_Request_Message():
+    msg = 'T_LCU_Force_Request_Message'
+    DATA_CHANNEL.Send_Tx(msg)
+# ==============================================================================
+# RX
+# ==============================================================================
+def Recv_T_LCU_Status_Response_Message(msg):
+    # UINT8                BIT_Passed;
+    # UINT16               Lock_Sensor_Count;
+    # T_Lock_Sensor_Data  * Lock_Sensor_Data;
+    #     typedef struct {
+    #         UINT8                Lock_Busy;
+    #         UINT16               Lock_State;
+    #         UINT16               Next_Lock_State;
+    #     } T_Lock_Sensor_Data;
+    CP_SIM.set_state('AFT',   'UNLOCKED')
+    CP_SIM.set_state('FWD',   'UNLOCKED')
+    CP_SIM.set_state('CRG_L', 'UNLOCKED')
+    CP_SIM.set_state('CRG_R', 'UNLOCKED')
+# ------------------------------------------------------------------------------
+def Recv_T_LCU_BIT_Response_Message(msg):
+    print msg
+    # Overall_BIT_Passed;
+    # Actuator_Extended;
+    # Actuator_Retracted;
+    # Capacitor_Charge_Disable;
+    # Capacitor_Charge_State;
+    # Actuator_Current;
+    # Lock_Dog_Location_Sensor;
+    # Lock_Dog_Displacement_Force_Sensor;
+    # ADS_Trigger_Location_Sensor;
+    # LCU_Point_of_Load_Power_Fault;
+    # Actuator_Power_Enable_Serial_Switch_Fault;
+    # Actuator_Extend_Serial_Switch_Fault;
+    # Actuator_Retract_Serial_Switch_Fault;
+    # Capacitor_Charge_Fault;
+    # Reset_Fault;
+    # Communications_Fault;
+    # Actuator_Serial_Switch_State;
+    # Solenoid_Serial_Switch_State;
+# ------------------------------------------------------------------------------
+def Recv_T_LCU_BIT_Response_Message(msg):
+    print msg
+    # Lock_1_Dog_Displacement_Force_Sensor;
+    # Lock_2_Dog_Displacement_Force_Sensor;
+# ------------------------------------------------------------------------------
+def Recv_Message(msg):
+    print 'Recv_Message - ' + msg
+    if msg.startswith('T_LCU_Status_Response_Message'):
+        Recv_T_LCU_Status_Response_Message(msg)
+    elif msg.startswith('T_LCU_BIT_Response_Message'):
+        Recv_T_LCU_BIT_Response_Message(msg)
+    elif msg.startswith('T_LCU_Force_Response_Message'):
+        Recv_T_LCU_Force_Response_Message(msg)
+    else:
+        print 'Recv_Message - huh? ' + msg
 
 # ##############################################################################
-
 class CP_Label(Label):
-    def __init__(self, parent, lock_id, grp_id):
+    def __init__(self, parent, grid_row, lock_id, grp_id):
         Label.__init__(self, parent, text="[%d.%s]" % (lock_id, grp_id))
+        self.grid(row=grid_row, column=0)
         self.lock_id = lock_id
         self.grp_id  = grp_id
-# ==============================================================================
+# ##############################################################################
 class CP_Button(Button):
-    def __init__(self, parent, lock_id, state):
+    def __init__(self, parent, grid_row, lock_id, state):
         Button.__init__(self, parent, width=20, bg='gray', command=self.click)
+        self.grid(row=grid_row, column=1)
         self.lock_id      = lock_id
         self.state        = state
         self.timer_id     = None
@@ -32,6 +127,9 @@ class CP_Button(Button):
                              'NO_TEST'  :'NO_TEST',             # Annun
                              'TEST'     :'TEST',                # Annun
                              'TESTING'  :'LOCKED | UNLOCKED',   # Button during test on
+                             'REQ_STAT' :'REQ_STAT',            # Manual control of LCU Status Request
+                             'REQ_BIT'  :'REQ_BIT',             # Manual control of LCU BIT Request
+                             'REQ_FORCE':'REQ_FORCE',           # Manual control of LCU Force Request
                             }
         self.colors       = {'ARMED'    :'gray',
                              'LOCKED'   :'green',
@@ -41,6 +139,9 @@ class CP_Button(Button):
                              'NO_TEST'  :'gray',
                              'TEST'     :'white',
                              'TESTING'  :'white',
+                             'REQ_STAT' :'white',
+                             'REQ_BIT'  :'white',
+                             'REQ_FORCE':'white',
                             }
         self.state_change = {'ARMED'    :'ARMED',      # Supposed to wait for control message before going to init locked/unlocked.
                              'LOCKED'   :'UNLOCKED',
@@ -50,6 +151,9 @@ class CP_Button(Button):
                              'NO_TEST'  :'TEST',
                              'TEST'     :'NO_TEST',
                              'TESTING'  :'TESTING',
+                             'REQ_STAT' :'REQ_STAT',
+                             'REQ_BIT'  :'REQ_BIT',
+                             'REQ_FORCE':'REQ_FORCE',
                              }
         self.update_display(self.state)
 # ------------------------------------------------------------------------------
@@ -78,6 +182,14 @@ class CP_Button(Button):
             self.state = self.state_change[self.state]
             self.update_display(self.state)
             print 'Click => new state for <%s> = <%s>' % (self.lock_id, self.state)
+            if self.state in ('LOCKED', 'UNLOCKED', 'ARMED'):
+                Send_T_LCU_Set_Lock_State_Command_Message(self.lock_id, self.state)
+            elif self.state == 'REQ_STAT':
+                Send_T_LCU_Status_Request_Message()
+            elif self.state == 'REQ_BIT':
+                Send_T_LCU_Bit_Request()
+            elif self.state == 'REQ_FORCE':
+                Send_T_LCU_Force_Request_Message()
         else:
             print 'Click => BAD state for <%s> = <%s>' % (self.lock_id, self.state)
             self.state = 'FAIL_0'
@@ -100,30 +212,36 @@ class CP_Button(Button):
         if self.timer_id:
             self.after_cancel(self.timer_id)
             self.timer_id = None
-# ==============================================================================
+# ##############################################################################
 class Sim_LCP_KC390(Frame):
     def __init__(self, parent, first_lock_id, lcp_type):
         '''size is the size of a square, in pixels'''
         self.lbl, self.btn      = {}, {}
         self.testing            = False
         self.first_lock_id      = first_lock_id
-        self.lbl['TEST']        = CP_Label  (parent, first_lock_id,   'TEST')
-        self.btn['TEST']        = CP_Button (parent, first_lock_id,   'NO_TEST')
-        self.lbl['AFT']         = CP_Label  (parent, first_lock_id+1, 'AFT')
-        self.btn['AFT']         = CP_Button (parent, first_lock_id+1, 'ARMED')
-        self.lbl['FWD']         = CP_Label  (parent, first_lock_id,   'FWD')
-        self.btn['FWD']         = CP_Button (parent, first_lock_id,   'ARMED')
+        self.lbl['REQ_STAT']    = CP_Label  (parent,  0, -1,              'REQ_STAT')
+        self.btn['REQ_STAT']    = CP_Button (parent,  0, -1,              'REQ_STAT')
+        self.lbl['REQ_BIT']     = CP_Label  (parent,  1, -1,              'REQ_BIT')
+        self.btn['REQ_BIT']     = CP_Button (parent,  1, -1,              'REQ_BIT')
+        self.lbl['REQ_FORCE']   = CP_Label  (parent,  2, -1,              'REQ_FORCE')
+        self.btn['REQ_FORCE']   = CP_Button (parent,  2, -1,              'REQ_FORCE')
+        self.lbl['TEST']        = CP_Label  (parent,  3, first_lock_id,   'TEST')
+        self.btn['TEST']        = CP_Button (parent,  3, first_lock_id,   'NO_TEST')
+        self.lbl['AFT']         = CP_Label  (parent,  4, first_lock_id+1, 'AFT')
+        self.btn['AFT']         = CP_Button (parent,  4, first_lock_id+1, 'ARMED')
+        self.lbl['FWD']         = CP_Label  (parent,  5, first_lock_id,   'FWD')
+        self.btn['FWD']         = CP_Button (parent,  5, first_lock_id,   'ARMED')
         if lcp_type == 1:
-            self.lbl['CRG_L']   = CP_Label  (parent, first_lock_id+1, 'CRG_L')
-            self.btn['CRG_L']   = CP_Button (parent, first_lock_id+1, 'ARMED')
-            self.lbl['CRG_R']   = CP_Label  (parent, first_lock_id,   'CRG_R')
-            self.btn['CRG_R']   = CP_Button (parent, first_lock_id,   'ARMED')
+            self.lbl['CRG_L']   = CP_Label  (parent,  6, first_lock_id+1, 'CRG_L')
+            self.btn['CRG_L']   = CP_Button (parent,  6, first_lock_id+1, 'ARMED')
+            self.lbl['CRG_R']   = CP_Label  (parent,  7, first_lock_id,   'CRG_R')
+            self.btn['CRG_R']   = CP_Button (parent,  7, first_lock_id,   'ARMED')
 
-        r = 0
-        for grp in ('TEST', 'AFT', 'FWD', 'CRG_L', 'CRG_R'):
-             self.lbl[grp].grid(row=r, column=0, sticky=W)
-             self.btn[grp].grid(row=r, column=1)
-             r += 1
+        #r = 0
+        #for grp in ('REQ_STAT', 'REQ_BIT', 'REQ_FORCE', 'TEST', 'AFT', 'FWD', 'CRG_L', 'CRG_R'):
+        #     self.lbl[grp].grid(row=r, column=0, sticky=W)
+        #     self.btn[grp].grid(row=r, column=1)
+        #     r += 1
 
         self.btn['TEST'].set_click_handler(self.click_test)
 # ------------------------------------------------------------------------------
@@ -136,117 +254,25 @@ class Sim_LCP_KC390(Frame):
             self.btn[grp].set_test(self.testing)
         #self.btn['RIGHT'].set_state('bad-state')   ## Demo of flashing fail
 # ##############################################################################
-def Tx_UDP(msg):
-    MCAST_GRP = '224.1.1.2'
-    MCAST_PORT = 5007 # LCP is master:  Tx on port=5007, Rx on port=5006
-    global tx_sock
-    if tx_sock is None:
-        tx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        tx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-    print '  .. Master Sending: ' + msg
-    tx_sock.sendto(msg, (MCAST_GRP, MCAST_PORT))
-# ##############################################################################
-def Rx_UDP():
-    global rx_sock
-    while True:
-        try:
-            MCAST_GRP = '224.1.1.1'
-            MCAST_PORT = 5006 # LCP is master:  Tx on port=5007, Rx on port=5006
-            rx_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-            rx_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            rx_sock.bind(('', MCAST_PORT))
-            mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
-            rx_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-            print 'master CP listener connected!'
-            break
-        except:
-            print 'master CP listener retry...'
-            pass
-    while True:
-        print 'master CP listening...'
+def main(args):
+    global CP_SIM, DATA_CHANNEL
 
-        #T_LCU_BIT_Request_Message
-        #    Lock_1_Actuator_Serial_Switch_IBIT;
-        #    Lock_2_Actuator_Serial_Switch_IBIT;
-        #    Lock_1_Actuator_Serial_Switch_State;
-        #    Lock_2_Actuator_Serial_Switch_State;
-        #    Lock_1_Solenoid_Serial_Switch_IBIT;
-        #    Lock_2_Solenoid_Serial_Switch_IBIT;
-        #    Lock_1_Solenoid_Serial_Switch_State;
-        #    Lock_2_Solenoid_Serial_Switch_State;
-
-        #T_LCU_Set_Lock_State_Command_Message;
-        #    Lock_1_State;
-        #    Lock_2_State;
-        #    Lock_3_State;
-        #    Lock_4_State;
-        #    Lock_5_State;
-        #    Lock_6_State;
-        #    Lock_7_State;
-        #    Lock_8_State;
-        #    Lock_9_State;
-        #    Lock_10_State;
-        #    Lock_11_State;
-        #    Lock_12_State;
-        #    Lock_13_State;
-        #    Lock_14_State;
-        #    Lock_15_State;
-        #    Lock_16_State;
-        #    Packet_ID_Seq;
-        #    Header_CR;
-
-        #T_LCU_Force_Request_Message
-
-        msg = rx_sock.recv(10240)
-        if msg.startswith('T_LCU_Status_Response_Message'):
-            # UINT8                BIT_Passed;
-            # UINT16               Lock_Sensor_Count;
-            # T_Lock_Sensor_Data  * Lock_Sensor_Data;
-            #     typedef struct {
-            #         UINT8                Lock_Busy;
-            #         UINT16               Lock_State;
-            #         UINT16               Next_Lock_State;
-            #     } T_Lock_Sensor_Data;
-            lcp_sim.set_state('AFT',   'UNLOCKED')
-            lcp_sim.set_state('FWD',   'UNLOCKED')
-            lcp_sim.set_state('CRG_L', 'UNLOCKED')
-            lcp_sim.set_state('CRG_R', 'UNLOCKED')
-        elif msg.startswith('T_LCU_BIT_Response_Message'):
-            print msg
-            # Overall_BIT_Passed;
-            # Actuator_Extended;
-            # Actuator_Retracted;
-            # Capacitor_Charge_Disable;
-            # Capacitor_Charge_State;
-            # Actuator_Current;
-            # Lock_Dog_Location_Sensor;
-            # Lock_Dog_Displacement_Force_Sensor;
-            # ADS_Trigger_Location_Sensor;
-            # LCU_Point_of_Load_Power_Fault;
-            # Actuator_Power_Enable_Serial_Switch_Fault;
-            # Actuator_Extend_Serial_Switch_Fault;
-            # Actuator_Retract_Serial_Switch_Fault;
-            # Capacitor_Charge_Fault;
-            # Reset_Fault;
-            # Communications_Fault;
-            # Actuator_Serial_Switch_State;
-            # Solenoid_Serial_Switch_State;
-        elif msg.startswith('T_LCU_Force_Response_Message'):
-            # Lock_1_Dog_Displacement_Force_Sensor;
-            # Lock_2_Dog_Displacement_Force_Sensor;
-            print msg
-        else:
-            print 'huh? ' + msg
-# ##############################################################################
-if __name__ == "__main__":
-    listen_thread = threading.Thread(target = Rx_UDP)
-    listen_thread.start()
-
-    global lcp_sim
-    tk_root       = Tk()
+    # TODO read from args
     first_lock_id = 1
+    lru_id        = 21  # TODO value is faked one for CP-1
     lcp_type      = 1
-    lcp_sim       = Sim_LCP_KC390(tk_root, first_lock_id, lcp_type)
-    Tx_UDP('T_LCU_Status_Request_Message')
-    tk_root.mainloop()
 
+    DATA_CHANNEL = Sim_UDP_Channel('224.1.1.2', 5007,  # Tx: CP (Master) Command channel
+                                   '224.1.1.1', 5006)  # Rx: LCU (Slave) Response channel
+    DATA_CHANNEL.Start_Tx()
+    DATA_CHANNEL.Start_Rx(Recv_Message)
+
+    tk_root = Tk()
+    tk_root.wm_title('CP for Lock %d/%d' % (first_lock_id, first_lock_id+1))
+
+    CP_SIM = Sim_LCP_KC390(tk_root, first_lock_id, lcp_type)
+
+    tk_root.mainloop()
+# ------------------------------------------------------------------------------
+if __name__ == "__main__":
+    main(sys.argv[1:])
