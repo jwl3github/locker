@@ -3,6 +3,7 @@ import Tkinter as tk
 import sys
 import time
 from Sim_UDP_Channel import *
+import Sim_Qpack_KC390
 
 CP_SIM = None
 
@@ -18,22 +19,23 @@ DATA_CHANNEL = None
 # TX
 # ==============================================================================
 def Send_T_LCU_Status_Request_Message():
-    msg = 'T_LCU_Status_Request_Message'
-    DATA_CHANNEL.Send_Tx(msg)
+    msg_struct = {'': 'T_LCU_Status_Request_Message'}
+    DATA_CHANNEL.Send_Tx(Sim_Qpack_KC390.Pack_Message(msg_struct))
 # ------------------------------------------------------------------------------
-def Send_T_LCU_Bit_Request(): #lock_id, act_ibit, act_state, sol_ibit, sol_state):
-        #    Lock_1_Actuator_Serial_Switch_IBIT;
-        #    Lock_2_Actuator_Serial_Switch_IBIT;
-        #    Lock_1_Actuator_Serial_Switch_State;
-        #    Lock_2_Actuator_Serial_Switch_State;
-        #    Lock_1_Solenoid_Serial_Switch_IBIT;
-        #    Lock_2_Solenoid_Serial_Switch_IBIT;
-        #    Lock_1_Solenoid_Serial_Switch_State;
-        #    Lock_2_Solenoid_Serial_Switch_State;
-    msg = 'T_LCU_BIT_Request_Message'
-    DATA_CHANNEL.Send_Tx(msg)
+def Send_T_LCU_BIT_Request():
+    msg_struct = {'': 'T_LCU_BIT_Request_Message',
+            'Lock_1_Actuator_Serial_Switch_IBIT':   '',
+            'Lock_2_Actuator_Serial_Switch_IBIT':   '',
+            'Lock_1_Actuator_Serial_Switch_State':  '',
+            'Lock_2_Actuator_Serial_Switch_State':  '',
+            'Lock_1_Solenoid_Serial_Switch_IBIT':   '',
+            'Lock_2_Solenoid_Serial_Switch_IBIT':   '',
+            'Lock_1_Solenoid_Serial_Switch_State':  '',
+            'Lock_2_Solenoid_Serial_Switch_State':  '',
+            }
+    DATA_CHANNEL.Send_Tx(Sim_Qpack_KC390.Pack_Message(msg_struct))
 # ------------------------------------------------------------------------------
-def Send_T_LCU_Set_Lock_State_Command_Message(lock_id, state):
+def Send_T_LCU_Set_Lock_State_Command_Message(lock_1_state, lock_2_state):
 
     # JWL: TODO Is there a design issue/opportunity here?
 # TODO any given LCU will only care about a pair of lock states, and furthermore
@@ -42,17 +44,20 @@ def Send_T_LCU_Set_Lock_State_Command_Message(lock_id, state):
 # TODO this still represents quite a bit of mis-information floating around.
 # TODO why not 'UINT16 Lock_A_Id; UINT16 Lock_A_State; UINT16 Lock_B_Id; UINT16 Lock_B_State'
 # TODO or even notice BIT Req just calls them 'Lock_1/Lock_2' so no need for '_Id'
-    msg  = 'T_LCU_Set_Lock_State_Command_Message,'
-    msg += 'Lock_%d_State=%s,' % (lock_id, state)
-    DATA_CHANNEL.Send_Tx(msg)
+    msg_struct = {'': 'T_LCU_Set_Lock_State_Command_Message',
+            'Lock_1_State': lock_1_state,
+            'Lock_2_State': lock_2_state,
+            }
+    DATA_CHANNEL.Send_Tx(Sim_Qpack_KC390.Pack_Message(msg_struct))
 # ------------------------------------------------------------------------------
 def Send_T_LCU_Force_Request_Message():
-    msg = 'T_LCU_Force_Request_Message'
-    DATA_CHANNEL.Send_Tx(msg)
+    msg_struct = {'': 'T_LCU_Force_Request_Message'}
+    DATA_CHANNEL.Send_Tx(Sim_Qpack_KC390.Pack_Message(msg_struct))
+
 # ==============================================================================
 # RX
 # ==============================================================================
-def Recv_T_LCU_Status_Response_Message(msg):
+def Recv_T_LCU_Status_Response_Message(msg_struct):
     # UINT8                BIT_Passed;
     # UINT16               Lock_Sensor_Count;
     # T_Lock_Sensor_Data  * Lock_Sensor_Data;
@@ -61,13 +66,13 @@ def Recv_T_LCU_Status_Response_Message(msg):
     #         UINT16               Lock_State;
     #         UINT16               Next_Lock_State;
     #     } T_Lock_Sensor_Data;
+    print msg_struct['']
     CP_SIM.set_state('AFT',   'UNLOCKED')
     CP_SIM.set_state('FWD',   'UNLOCKED')
     CP_SIM.set_state('CRG_L', 'UNLOCKED')
     CP_SIM.set_state('CRG_R', 'UNLOCKED')
 # ------------------------------------------------------------------------------
-def Recv_T_LCU_BIT_Response_Message(msg):
-    print msg
+def Recv_T_LCU_BIT_Response_Message(msg_struct):
     # Overall_BIT_Passed;
     # Actuator_Extended;
     # Actuator_Retracted;
@@ -86,22 +91,31 @@ def Recv_T_LCU_BIT_Response_Message(msg):
     # Communications_Fault;
     # Actuator_Serial_Switch_State;
     # Solenoid_Serial_Switch_State;
+    print msg_struct['']
 # ------------------------------------------------------------------------------
-def Recv_T_LCU_BIT_Response_Message(msg):
-    print msg
+def Recv_T_LCU_Force_Response_Message(msg_struct):
     # Lock_1_Dog_Displacement_Force_Sensor;
     # Lock_2_Dog_Displacement_Force_Sensor;
+    print msg_struct['']
 # ------------------------------------------------------------------------------
 def Recv_Message(msg):
-    print 'Recv_Message - ' + msg
-    if msg.startswith('T_LCU_Status_Response_Message'):
-        Recv_T_LCU_Status_Response_Message(msg)
-    elif msg.startswith('T_LCU_BIT_Response_Message'):
-        Recv_T_LCU_BIT_Response_Message(msg)
-    elif msg.startswith('T_LCU_Force_Response_Message'):
-        Recv_T_LCU_Force_Response_Message(msg)
+    msg_struct = Sim_Qpack_KC390.Unpack_Message(msg)
+    msg_type   = msg_struct['']
+
+    if msg_type == 'T_LCU_Status_Response_Message':
+        # TODO Inc_Var('RESP_STAT.count')
+        Recv_T_LCU_Status_Response_Message(msg_struct)
+
+    elif msg_type == 'T_LCU_BIT_Response_Message':
+        # TODO Inc_Var('RESP_BIT.count')
+        Recv_T_LCU_BIT_Response_Message(msg_struct)
+
+    elif msg_type == 'T_LCU_Force_Response_Message':
+        # TODO Inc_Var('RESP_FORCE.count')
+        Recv_T_LCU_Force_Response_Message(msg_struct)
+
     else:
-        print 'Recv_Message - huh? ' + msg
+        print 'Recv_Message - unknown - ' + msg
 
 # ##############################################################################
 class CP_Label(Label):
@@ -183,11 +197,12 @@ class CP_Button(Button):
             self.update_display(self.state)
             print 'Click => new state for <%s> = <%s>' % (self.lock_id, self.state)
             if self.state in ('LOCKED', 'UNLOCKED', 'ARMED'):
-                Send_T_LCU_Set_Lock_State_Command_Message(self.lock_id, self.state)
+# TODO - kludge should be handled by parent, not button itself
+                Send_T_LCU_Set_Lock_State_Command_Message(self.state, self.state)
             elif self.state == 'REQ_STAT':
                 Send_T_LCU_Status_Request_Message()
             elif self.state == 'REQ_BIT':
-                Send_T_LCU_Bit_Request()
+                Send_T_LCU_BIT_Request()
             elif self.state == 'REQ_FORCE':
                 Send_T_LCU_Force_Request_Message()
         else:
@@ -217,33 +232,29 @@ class Sim_LCP_KC390(Frame):
     def __init__(self, parent, first_lock_id, lcp_type):
         '''size is the size of a square, in pixels'''
         self.lbl, self.btn      = {}, {}
+        self.parent             = parent
+        self.grid_row           = 0
         self.testing            = False
         self.first_lock_id      = first_lock_id
-        self.lbl['REQ_STAT']    = CP_Label  (parent,  0, -1,              'REQ_STAT')
-        self.btn['REQ_STAT']    = CP_Button (parent,  0, -1,              'REQ_STAT')
-        self.lbl['REQ_BIT']     = CP_Label  (parent,  1, -1,              'REQ_BIT')
-        self.btn['REQ_BIT']     = CP_Button (parent,  1, -1,              'REQ_BIT')
-        self.lbl['REQ_FORCE']   = CP_Label  (parent,  2, -1,              'REQ_FORCE')
-        self.btn['REQ_FORCE']   = CP_Button (parent,  2, -1,              'REQ_FORCE')
-        self.lbl['TEST']        = CP_Label  (parent,  3, first_lock_id,   'TEST')
-        self.btn['TEST']        = CP_Button (parent,  3, first_lock_id,   'NO_TEST')
-        self.lbl['AFT']         = CP_Label  (parent,  4, first_lock_id+1, 'AFT')
-        self.btn['AFT']         = CP_Button (parent,  4, first_lock_id+1, 'ARMED')
-        self.lbl['FWD']         = CP_Label  (parent,  5, first_lock_id,   'FWD')
-        self.btn['FWD']         = CP_Button (parent,  5, first_lock_id,   'ARMED')
+        self.add_label_button(-1,              'REQ_STAT',  'REQ_STAT')
+        self.add_label_button(-1,              'REQ_BIT',   'REQ_BIT')
+        self.add_label_button(-1,              'REQ_FORCE', 'REQ_FORCE')
+        self.add_label_button(first_lock_id,   'TEST',      'NO_TEST')
+        self.add_label_button(first_lock_id+1, 'AFT',       'ARMED')
+        self.add_label_button(first_lock_id,   'FWD',       'ARMED')
         if lcp_type == 1:
-            self.lbl['CRG_L']   = CP_Label  (parent,  6, first_lock_id+1, 'CRG_L')
-            self.btn['CRG_L']   = CP_Button (parent,  6, first_lock_id+1, 'ARMED')
-            self.lbl['CRG_R']   = CP_Label  (parent,  7, first_lock_id,   'CRG_R')
-            self.btn['CRG_R']   = CP_Button (parent,  7, first_lock_id,   'ARMED')
-
-        #r = 0
-        #for grp in ('REQ_STAT', 'REQ_BIT', 'REQ_FORCE', 'TEST', 'AFT', 'FWD', 'CRG_L', 'CRG_R'):
-        #     self.lbl[grp].grid(row=r, column=0, sticky=W)
-        #     self.btn[grp].grid(row=r, column=1)
-        #     r += 1
+            self.add_label_button(first_lock_id+1, 'CRG_L', 'ARMED')
+            self.add_label_button(first_lock_id,   'CRG_R', 'ARMED')
+        elif lcp_type == 2:
+            pass   # There are no more buttons for Type 2
+      # elif lcp_type == 3:  TODO perhaps RCP should be considered Type 3 ?
 
         self.btn['TEST'].set_click_handler(self.click_test)
+# ------------------------------------------------------------------------------
+    def add_label_button(self, lock_id, label, state):
+        self.lbl[label] = CP_Label  (self.parent,  self.grid_row, lock_id, label)
+        self.btn[label] = CP_Button (self.parent,  self.grid_row, lock_id, state)
+        self.grid_row += 1
 # ------------------------------------------------------------------------------
     def set_state(self, grp_id, state):
         self.btn[grp_id].set_state(state)

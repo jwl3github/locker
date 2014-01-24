@@ -48,8 +48,20 @@ listen_thread[-1].start()
 listen_thread.append(threading.Thread(target = Start_Rx_UDP_1))
 listen_thread[-1].start()
 
-master = Tk()
-text_w = Text(master)
+tk_root  = Tk()
+
+scroll_x = Scrollbar(tk_root, orient=HORIZONTAL)
+scroll_x.pack(side=BOTTOM, fill=X)
+
+scroll_y = Scrollbar(tk_root)
+scroll_y.pack(side=RIGHT, fill=Y)
+
+text_w = Text(tk_root, wrap=NONE,
+              yscrollcommand=scroll_y.set,
+              xscrollcommand=scroll_x.set)
 text_w.pack()
 
-mainloop()
+scroll_x.config(command=text_w.xview)
+scroll_y.config(command=text_w.yview)
+
+tk_root.mainloop()
