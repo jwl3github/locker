@@ -1,0 +1,90 @@
+General issues:
+
+1) Use UINT16 in all possible cases?
+     Note: Dave F says that TI uses 16-bit as smallest addressable size
+     Note: RAM available in smallest processor not known yet
+     Note: Serialization does not mandate same image as memory; ref CBOR as a IO redux method
+
+2) If UINT8 used, pad Aux to UINT16?
+
+3) Move Packet_ID_Seq to header instead of footer?
+
+4) Need LRU_ID enumeration
+
+5) Word16_Count to exclude header?
+     Opinion: good idea to include header to make generic 'skip message' processing available.
+
+6) Why 'Header_CRC'?  Doesn't include the whole message body minus the CRC field itself?
+     Also: what is the CRC polynomial to use?
+
+7) Can the max number of concurrent messages be determined for this system?
+     i.e. Is this a valid approach to deal with static memory allocation?
+
+
+
+
+
+
+
+
+T_Set_LCAS_Command_Message (51) - Dynamic count, range == [(0), (41)]
+	* Has 41 defined LCAS message types, so 41 may be the implied MAX
+
+
+T_Set_Event_Text_Command_Message (53) - Dynamic count, range == [0,4]
+
+
+T_Update_Window_Command_Message (55) - Dynamic array of STRUCT, missing range on counter
+	STRUCT contains [possible!] dynamic count of CHAR
+
+        * This is a central GUI control message
+
+	* Recommend split several messages; this design packs all possible widget control into a single 
+          message of VARIANT-level complexity
+
+
+T_Add_Pallet_Command_Message (58) - Dynamic array of STRUCT, range == [1,7]
+
+T_Add_Platform_Command_Message (59) - Dynamic array of STRUCT, range == [1,7]
+
+T_Add_CDS_Command_Message (59) - Dynamic array of STRUCT, range == [1,20]
+	The Bundle data struct has issues: a value exceeds 16-bit range, and there is an overly complicated Enum
+
+T_Add_Logistics_Command_Message (61) - Dynamic array of STRUCT, range == [1,32]
+	The Logistics data struct has issues: there is an overly complicated Enum
+
+T_Delete_Cargo_Command_Message (62) - Dynamic array of UINT16, range == [1,(32)]
+        The MAX is missing, but Logistics is biggest and allows 32 max
+
+T_Set_Lock_Icons_Command_Message (65) - Dynamic array of STRUCT, range == [1,16]
+
+T_Set_CRG_Icons_Command_Message (66) - Dynamic array of STRUCT, range == [1,16]
+
+T_Highlight_Cargo_Command_Message (70) - Dynamic array of STRUCT, range == [0,64]
+
+T_Highlight_Event_Command_Message (71) - Dynamic array of STRUCT, range == [0,16]
+
+T_Add_Event_Command_Message (72) - Dynamic array of UINT16, range == [0,32]
+
+T_Delete_Event_Command_Message (73) - Dynamic array of UINT16, range == [0,32]
+
+T_Event_Data_Periodic_Message  (86) - VARIANT_ARRAY, range == [0,16]
+	Some VARIANT_ITEMs include dynamic array of UINT16
+
+T_Cargo_Periodic_Message (87) - Multiple dynamic array of STRUCT, some ranges missing
+
+T_Release_Force_Periodic_Message (88) - Dynamic array of STRUCT, range == [0,24]
+
+T_Monitor_BIT_Response_Message (105) - Dynamic array of STRUCT, range == missing
+
+T_Monitor_Status_Periodic_Message (107) - Fixed array of STRUCT [#32]
+
+T_Mission_Parameter_Command_Message (108) - VARIANT_ITEM
+
+T_SOFTWARE_FIELD_LOAD_Message (250) - VARIANT_ARRAY
+
+T_Maintenance_Data_ARINC_Periodic_Message (201) - Dynamic array of STRUCT (32-bit word), range == missing
+
+
+
+
