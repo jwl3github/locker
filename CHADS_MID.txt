@@ -1,0 +1,149 @@
+Message,            Partition or,   Partition or,  System_Mode,    Xmit_Frame_Rate, Xmit_Frame_Offset, Xmit_Event,      Bus,      Response_Expected,      Response_Timeout,  Reference_Anchors,   Notes
+,                   LRU_From,       LRU_To,        ,               ,                ,                   ,                ,         ,                       msec,              ,
+
+Ack 1,              any,            any,           Run,            N/A,             N/A,                ???,             ???,      ???,                    ???,               ,                    Acknowledge
+Ping 2,             any,            any,           Run,            N/A,             N/A,                ???,             ???,      ???,                    ???,               ,                    Ping
+
+BIT_Req 3,          CHC_C,          LCU_C,         Run,            10,              0,                  N/A,             RS485,    BIT_Resp 4,             10,                ,                    BIT_Request
+BIT_Req 3,          CHC_M,          LCU_M,         Run,            10,              0,                  N/A,             RS485,    BIT_Resp 4,             10,                ,                    BIT_Request
+
+CP_State_Req 10,    CHC_C,          CP_C,          Run,            10,              1,                  N/A,             RS422,    CP_St_Resp 11,          10,                ,                    Control_Panel_Status_Request
+CP_State_Req 10,    CHC_M,          CP_M,          Run,            10,              1,                  N/A,             RS422,    CP_St_Resp 11,          10,                ,                    Control_Panel_Status_Request
+
+CP_BIT_Req 12,      CHC_C,          CP_C,          Run,            10,              2,                  N/A,             RS422,    CP_BIT_Resp 13,         10,                ,                    Control_Panel_BIT_Request
+CP_BIT_Req 12,      CHC_M,          CP_M,          Run,            10,              2,                  N/A,             RS422,    CP_BIT_Resp 13,         10,                ,                    Control_Panel_BIT_Request
+
+
+
+
+Hi_Event_Cmd 71,    CHC_C,          CHC_D,         Run,            N/A,             N/A,                ???,             ???,      ???,                    ???,               ,                    Highlight_Event_Command
+Add_Event 72,       CHC_C,          CHC_D,         Run,            N/A,             N/A,                ???,             ???,      ???,                    ???,               ,                    Add_Event_Command
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+Sequence Diagrams
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+################################################################################
+## Master/Slave Messages
+################################################################################
+BIT_Req ->
+        <- BIT_Resp
+--------------------------------------------------------------------------------
+Monitor_BIT_Req ->
+        <- Monitor_BIT_Resp
+--------------------------------------------------------------------------------
+CP_BIT_Req ->
+        <- CP_BIT_Resp 
+--------------------------------------------------------------------------------
+CP_State_Req ->                    CHC_C to CP_C_[1..8]
+        <- CP_State_Resp 
+--------------------------------------------------------------------------------
+CHC_Display_BIT_Req ->
+        <- CHC_Display_BIT_Req 
+--------------------------------------------------------------------------------
+LCU_BIT_Req ->
+        <- LCU_BIT_Resp
+--------------------------------------------------------------------------------
+LCU_Status_Req ->
+        <- LCU_Status_Resp
+--------------------------------------------------------------------------------
+LCU_Force_Req ->
+        <- LCU_Force_Resp
+--------------------------------------------------------------------------------
+Field_Load_Req ->
+        <- Field_Load_Resp
+--------------------------------------------------------------------------------
+Maintenance_Data_Req ->
+        <-  (no resp defined?)  (Ack?)
+
+################################################################################
+## Control (Ack'd)
+################################################################################
+Ping ->
+     <- Ack  ?   w/ Packet_ID_Seq set to Ping's
+--------------------------------------------------------------------------------
+CP_Button_Press ->
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Field_Load_Data ->
+        <- Ack ?
+        <- Field_Load_Complete_Resp
+--------------------------------------------------------------------------------
+LCU_Set_Lock_State_Cmd ->    (all locks at once - perhaps CHC?)
+Set_Lock_State_Cmd ->        (single lock / single side - perhaps CP?)
+Set_PDM_State_Cmd ->
+Set_Towplate_State_Cmd ->
+Set_CRG_State_Cmd ->
+        <- Ack ? 
+--------------------------------------------------------------------------------
+LVAD_Mission_Param_Event ->
+LAPES_Mission_Param_Event ->
+Combat_Offload_Mission_Param_Event ->
+CDS_Mission_Param_Event ->
+        <- Ack ? 
+
+################################################################################
+## Broadcast (Unack'd)
+################################################################################
+System_Status_Periodic ->          
+Lock_Status_Periodic ->          
+Device_Status_Periodic ->          
+LRU_Status_Periodic ->          
+Commands_Periodic ->          
+Event_Data_Periodic ->          
+Cargo_Periodic ->          
+Release_Force_Periodic ->          
+Command_Status_Periodic ->          
+Monitor_Status_Periodic ->          
+Maintenance_Data_ARINC_Periodic ->          
+     [none] ?
+
+################################################################################
+## GUI Interaction
+################################################################################
+Set_LCAS_Cmd ->                    CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Set_SPDU_Cmd ->                    CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Set_Event_Text_Cmd ->              CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Set_Main_Selection_Cmd ->          CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Update_Window_Cmd ->               CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Show_Dialog_Cmd ->                 CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Set_Mode_Cmd ->                    CHC-D ? (GUI)   READY, DELIVERY, CARGO EDIT, EVENT EDIT, DEVICE_CONTROL
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Add_Pallet_Cmd ->                  CHC-D ? (GUI)
+Add_Platform_Cmd ->                CHC-D ? (GUI)
+Add_CDS_Cmd ->                     CHC-D ? (GUI)
+Add_Logistics_Cmd ->               CHC-D ? (GUI)
+Add_Buffer_Stop_Cmd ->             CHC-D ? (GUI)
+Add_Event_Cmd ->                   CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Delete_Cargo_Cmd ->                CHC-D ? (GUI)
+Delete_Buffer_Stop_Cmd ->          CHC-D ? (GUI)
+Delete_Event_Cmd ->                CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Set_Lock_Icons_Cmd ->              CHC-D ? (GUI)
+Set_CRG_Icons_Cmd ->               CHC-D ? (GUI)
+Set_PDM_Icons_Cmd ->               CHC-D ? (GUI)
+Set_Towplate_Icon_Cmd ->           CHC-D ? (GUI)
+        <- Ack ? 
+--------------------------------------------------------------------------------
+Highlight_Button_Cmd ->            CHC-D ? (GUI)
+Highlight_Cargo_Cmd ->             CHC-D ? (GUI)
+Highlight_Event_Cmd ->             CHC-D ? (GUI)
+        <- Ack ? 
